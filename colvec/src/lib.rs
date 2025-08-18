@@ -1,6 +1,8 @@
 pub use colvec_derive::ColVec;
 
 mod colvec;
+mod raw;
+mod error;
 
 #[cfg(test)]
 mod tests {
