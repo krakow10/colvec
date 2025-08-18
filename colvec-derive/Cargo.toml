@@ -6,7 +6,7 @@ repository = "https://github.com/krakow10/colvec"
 license = "MIT OR Apache-2.0"
 description = "Derive macros for colvec."
 authors = ["Rhys Lloyd <krakow20@gmail.com>"]
-keywords = ["struct of arrays", "vec", "allocator api"]
+keywords = ["struct", "arrays", "vec", "allocator-api2"]
 
 [lib]
 proc-macro=true
