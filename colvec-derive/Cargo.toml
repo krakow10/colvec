@@ -1,0 +1,18 @@
+[package]
+name = "colvec-derive"
+version = "0.0.0-squat"
+edition = "2024"
+repository = "https://github.com/krakow10/colvec"
+license = "MIT OR Apache-2.0"
+description = "Derive macros for colvec."
+authors = ["Rhys Lloyd <krakow20@gmail.com>"]
+keywords = ["struct of arrays", "vec", "allocator api"]
+
+[lib]
+proc-macro=true
+
+[dependencies]
+allocator-api2 = "0.3.0"
+proc-macro2 = "1.0.97"
+quote = "1.0.40"
+syn = { version = "2.0.106", features = ["full"] }

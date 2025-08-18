@@ -1,0 +1,6 @@
+[workspace]
+members = [
+	"colvec",
+	"colvec-derive",
+]
+resolver = "2"

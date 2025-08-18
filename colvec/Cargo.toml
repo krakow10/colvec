@@ -1,0 +1,13 @@
+[package]
+name = "colvec"
+version = "0.0.0-squat"
+edition = "2024"
+repository = "https://github.com/krakow10/colvec"
+license = "MIT OR Apache-2.0"
+description = "Struct-of-arrays column vec like Zig's MultiArrayList"
+authors = ["Rhys Lloyd <krakow20@gmail.com>"]
+keywords = ["struct of arrays", "vec", "allocator api"]
+
+[dependencies]
+allocator-api2 = "0.3.0"
+colvec-derive = { version = "0.1.0", path = "../colvec-derive" }
