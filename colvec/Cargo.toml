@@ -10,4 +10,4 @@ keywords = ["struct of arrays", "vec", "allocator api"]
 
 [dependencies]
 allocator-api2 = "0.3.0"
-colvec-derive = { version = "0.1.0", path = "../colvec-derive" }
+colvec-derive = { version = "0.0.0-squat", path = "../colvec-derive" }

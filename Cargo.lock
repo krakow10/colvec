@@ -10,7 +10,7 @@ checksum = "78200ac3468a57d333cd0ea5dd398e25111194dcacd49208afca95c629a6311d"
 
 [[package]]
 name = "colvec"
-version = "0.1.0"
+version = "0.0.0-squat"
 dependencies = [
  "allocator-api2",
  "colvec-derive",
@@ -18,7 +18,7 @@ dependencies = [
 
 [[package]]
 name = "colvec-derive"
-version = "0.1.0"
+version = "0.0.0-squat"
 dependencies = [
  "allocator-api2",
  "proc-macro2",
