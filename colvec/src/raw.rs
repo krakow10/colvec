@@ -11,6 +11,7 @@ use allocator_api2::alloc::{Allocator, Global};
 
 // le type
 use crate::colvec::Test;
+use crate::colvec::move_fields;
 
 // One central function responsible for reporting capacity overflows. This'll
 // ensure that the code generation related to these panics is minimal as there's
@@ -178,7 +179,14 @@ impl<A: Allocator> TestRawColVecInner<A> {
 
 		let new_layout = layout_array(cap, elem_layout)?;
 
-		let ptr = finish_grow(new_layout, self.current_memory(elem_layout), &mut self.alloc)?;
+		let ptr = finish_grow(
+			new_layout,
+			self.current_memory(elem_layout),
+			&mut self.alloc,
+			self.cap,
+			cap,
+			len,
+		)?;
 		// SAFETY: finish_grow would have resulted in a capacity overflow if we tried to allocate more than `isize::MAX` items
 
 		unsafe { self.set_ptr_and_cap(ptr, cap) };
@@ -193,35 +201,33 @@ fn finish_grow<A>(
 	new_layout: Layout,
 	current_memory: Option<(NonNull<u8>, Layout)>,
 	alloc: &mut A,
+	old_capacity: usize,
+	new_capacity: usize,
+	len: usize,
 ) -> Result<NonNull<[u8]>, TryReserveError>
 where
 	A: Allocator,
 {
 	alloc_guard(new_layout.size())?;
 
-	let memory = if let Some((ptr, old_layout)) = current_memory {
+	if let Some((ptr, old_layout)) = current_memory {
 		debug_assert_eq!(old_layout.align(), new_layout.align());
-		unsafe {
+		let memory = unsafe {
 			// The allocator checks for alignment equality
 			hint::assert_unchecked(old_layout.align() == new_layout.align());
 			alloc.grow(ptr, old_layout, new_layout)
-		}
+		};
+		let Ok(region) = memory else{
+			return Err(AllocError { layout: new_layout }.into());
+		};
+
+		unsafe{ move_fields(ptr.as_ptr(), old_capacity, new_capacity, len) }
+
+		Ok(region)
 	} else {
 		alloc.allocate(new_layout)
-	};
-
-	let Ok(region) = memory else{
-		return Err(AllocError { layout: new_layout }.into());
-	};
-
-	// move all fields except the first field
-	// must be moved in offset descending order :(
-	// use crate compile_time_sort
-	todo!("move fields");
-
+			.map_err(|_| AllocError { layout: new_layout }.into())
 	}
-
-	Ok(region)
 }
 
 #[cold]

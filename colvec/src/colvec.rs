@@ -14,6 +14,30 @@ pub(crate) struct Test{
 	field4:u32,
 }
 
+pub(crate) unsafe fn move_fields(
+	ptr: *mut u8,
+	old_capacity: usize,
+	new_capacity: usize,
+	len: usize,
+){
+	// move all fields except the first field
+	// must be moved in offset descending order :(
+	macro_rules! copy_field{
+		($field:ident, $ty:ty) => {
+			unsafe {
+				let src = ptr.add(old_capacity * offset_of!(Test,$field)).cast::<$ty>();
+				let dst = ptr.add(new_capacity * offset_of!(Test,$field)).cast::<$ty>();
+				ptr::copy_nonoverlapping(src, dst, len);
+			}
+		};
+	}
+
+	// the fields are moved in offset-descending order, and the field at offset 0 is skipped
+	copy_field!(field2,Option<u8>);
+	copy_field!(field3,i16);
+	copy_field!(field1,u8);
+}
+
 // Vec<Test> len 4 cap 4
 // [4444 2233 1PPP][4444 2233 1PPP][4444 2233 1PPP][4444 2233 1PPP]
 
@@ -110,3 +134,21 @@ impl_field_access!(
 	(field3, i16, field3_slice, field3_slice_mut),
 	(field4, u32, field4_slice, field4_slice_mut)
 );
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+	#[test]
+	fn it_works() {
+		let mut test=TestColVec::new();
+		test.push(Test{
+			field1:1,
+			field2:None,
+			field3:-1,
+			field4:256,
+		});
+		assert_eq!( 1, test.field1_slice()[0]);
+		assert_eq!(-1, test.field3_slice()[0]);
+	}
+}
