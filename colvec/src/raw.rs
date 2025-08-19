@@ -80,12 +80,20 @@ const fn min_non_zero_cap(size: usize, align: usize) -> usize {
 	}
 }
 
-impl<A: Allocator> TestRawColVec<A> {
-	pub(crate) const MIN_NON_ZERO_CAP: usize = min_non_zero_cap(size_of::<Test>(),align_of::<Test>());
+const fn unpadded_elem_size() -> usize{
+	size_of::<u8>() + size_of::<Option<u8>>() + size_of::<i16>() + size_of::<u32>()
+}
+const fn elem_align() -> usize {
+	align_of::<Test>()
+}
+const fn unpadded_elem_layout() -> Layout {
+	unsafe { Layout::from_size_align_unchecked(unpadded_elem_size(), elem_align()) }
+}
 
+impl<A: Allocator> TestRawColVec<A> {
 	#[inline]
 	pub(crate) const fn new_in(alloc: A) -> Self {
-		Self { inner: TestRawColVecInner::new_in(alloc, NonZero::new(align_of::<Test>()).unwrap()) }
+		Self { inner: TestRawColVecInner::new_in(alloc, NonZero::new(elem_align()).unwrap()) }
 	}
 	// #[inline]
 	// #[track_caller]
@@ -96,7 +104,7 @@ impl<A: Allocator> TestRawColVec<A> {
 	// }
 	#[inline]
 	pub(crate) const fn capacity(&self) -> usize {
-		self.inner.capacity(size_of::<Test>())
+		self.inner.capacity(unpadded_elem_size())
 	}
 	/// Gets a raw pointer to the start of the allocation. Note that this is
 	/// `Unique::dangling()` if `capacity == 0` or `T` is zero-sized. In the former case, you must
@@ -108,7 +116,7 @@ impl<A: Allocator> TestRawColVec<A> {
 	#[inline(never)]
 	#[track_caller]
 	pub(crate) fn grow_one(&mut self) {
-		self.inner.grow_one(Layout::new::<Test>())
+		self.inner.grow_one(unpadded_elem_layout())
 	}
 }
 
@@ -177,7 +185,7 @@ impl<A: Allocator> TestRawColVecInner<A> {
 		let cap = cmp::max(self.cap * 2, required_cap);
 		let cap = cmp::max(min_non_zero_cap(elem_layout.size(),elem_layout.align()), cap);
 
-		let new_layout = layout_array(cap, elem_layout)?;
+		let new_layout = layout_colvec(cap, elem_layout)?;
 
 		let ptr = finish_grow(
 			new_layout,
@@ -270,16 +278,6 @@ const fn repeat_packed(layout: &Layout, n: usize) -> Result<Layout, LayoutError>
 }
 
 #[inline]
-const fn repeat(layout: &Layout, n: usize) -> Result<(Layout, usize), LayoutError> {
-	let padded = layout.pad_to_align();
-	if let Ok(repeated) = repeat_packed(&padded, n) {
-		Ok((repeated, padded.size()))
-	} else {
-		Err(LayoutError)
-	}
-}
-
-#[inline]
-fn layout_array(cap: usize, elem_layout: Layout) -> Result<Layout, TryReserveError> {
-	repeat(&elem_layout, cap).map(|(layout, _pad)| layout).map_err(|_| CapacityOverflow.into())
+fn layout_colvec(cap: usize, elem_layout: Layout) -> Result<Layout, TryReserveError> {
+	repeat_packed(&elem_layout, cap).map_err(|_| CapacityOverflow.into())
 }
