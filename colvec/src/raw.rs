@@ -235,7 +235,7 @@ where
 fn handle_error(e: TryReserveError) -> ! {
 	match e.kind() {
 		CapacityOverflow => capacity_overflow(),
-		AllocError { layout, .. } => std::alloc::handle_alloc_error(layout),
+		AllocError { layout, .. } => allocator_api2::alloc::handle_alloc_error(layout),
 	}
 }
 
