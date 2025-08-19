@@ -18,18 +18,19 @@ struct Test{
 
 let mut col=TestColVec::new();
 col.push(Test{
-	field1:255,
-	field2:Some(255),
-	field3:-1,
-	field4:65536,
+	field1:1,
+	field2:Some(2),
+	field3:3,
+	field4:4,
 });
 col.push(Test{
-	field1:254,
-	field2:None,
-	field3:1,
-	field4:512,
+	field1:5,
+	field2:Some(6),
+	field3:7,
+	field4:8,
 });
-println!("{:?}", col.field2_slice());
+
+assert_eq!(&[Some(2),Some(6)], col.field2_slice());
 ```
 
 #### License
