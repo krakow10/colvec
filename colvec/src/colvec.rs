@@ -140,13 +140,18 @@ mod tests {
 	#[test]
 	fn it_works() {
 		let mut test=TestColVec::new();
-		test.push(Test{
-			field1:1,
-			field2:None,
-			field3:-1,
-			field4:256,
-		});
+		for _ in 0..9{
+			test.push(Test{
+				field1:1,
+				field2:None,
+				field3:-1,
+				field4:256,
+			});
+		}
+
 		assert_eq!( 1, test.field1_slice()[0]);
 		assert_eq!(-1, test.field3_slice()[0]);
+		assert_eq!( 1, test.field1_slice()[8]);
+		assert_eq!(-1, test.field3_slice()[8]);
 	}
 }
