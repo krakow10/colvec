@@ -4,7 +4,9 @@ Column Vec
 [![Latest version](https://img.shields.io/crates/v/colvec.svg)](https://crates.io/crates/colvec)
 ![License](https://img.shields.io/crates/l/colvec.svg)
 
-`colvec` provides a derive macro which generates a Vec-like data structure, except with a transposed row / column layout.  This means you can take a slice across an entire column of a single struct field.  ColVec has the same size and growth factor as Vec, and uses a single contiguous allocation.  ColVec can be smaller than Vec<Struct> when the Struct has padding, since no padding is needed in the transposed layout*.  ColVec can be faster to iterate than Vec<Struct> when only accessing a single struct field column because the unused data in the other fields do not occupy the cache line and need cache eviction.
+`colvec` provides a derive macro which generates a Vec-like data structure, except with a transposed row / column layout.  This means you can take a slice across an entire column of a single struct field.  ColVec has the same size and growth factor as Vec, and uses a single contiguous allocation.  ColVec can be smaller than Vec<Struct> when the Struct has padding, since no padding is needed in the transposed layout [^1].  ColVec can be faster to iterate than Vec<Struct> when only accessing a single struct field column because the unused data in the other fields do not occupy the cache line and need cache eviction.
+
+[^1]: To ensure proper alignment, the minimum capacity is the item alignment.
 
 ## Example
 ```rust
