@@ -178,7 +178,10 @@ impl<A: Allocator> TestRawColVecInner<A> {
 		}
 
 		// Nothing we can really do about these checks, sadly.
-		let required_cap = len.checked_add(additional).ok_or(CapacityOverflow)?;
+		let required_cap = len.checked_add(additional).ok_or(CapacityOverflow)?
+			// cap must be a multiple of align due to using
+			// unpadded elem_layout for allocation layout calculation.
+			.next_multiple_of(elem_layout.align());
 
 		// This guarantees exponential growth. The doubling cannot overflow
 		// because `cap <= isize::MAX` and the type of `cap` is `usize`.
