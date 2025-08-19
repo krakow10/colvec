@@ -98,10 +98,10 @@ impl<A: Allocator> TestColVec<A>{
 }
 
 macro_rules! impl_field_access {
-	($(($field:ident, $ty:ty, $immut:ident, $muta:ident)),*) => {
+	($(($field:ident, $ty:ty, $slice:ident, $slice_mut:ident)),*) => {
 	    impl<A: Allocator> TestColVec<A>{
 			$(
-			    pub const fn $immut(&self) -> &[$ty] {
+			    pub const fn $slice(&self) -> &[$ty] {
 					unsafe {
 						core::slice::from_raw_parts(
 							self.as_ptr()
@@ -111,7 +111,7 @@ macro_rules! impl_field_access {
 						)
 					}
 				}
-				pub const fn $muta(&mut self) -> &mut [$ty] {
+				pub const fn $slice_mut(&mut self) -> &mut [$ty] {
 					unsafe {
 						core::slice::from_raw_parts_mut(
 							self.as_mut_ptr()
