@@ -1,7 +1,6 @@
 use crate::raw::TestRawColVec;
 
 use core::ptr;
-use core::mem::offset_of;
 
 use allocator_api2::alloc::{Allocator, Global};
 
@@ -14,6 +13,11 @@ pub(crate) struct Test{
 	field4:u32,
 }
 
+const OFFSET_FIELD_1:usize = 0;
+const OFFSET_FIELD_2:usize = size_of::<u8>();
+const OFFSET_FIELD_3:usize = size_of::<u8>() + size_of::<Option<u8>>();
+const OFFSET_FIELD_4:usize = size_of::<u8>() + size_of::<Option<u8>>() + size_of::<i16>();
+
 pub(crate) unsafe fn move_fields(
 	ptr: *mut u8,
 	old_capacity: usize,
@@ -21,19 +25,19 @@ pub(crate) unsafe fn move_fields(
 	len: usize,
 ){
 	macro_rules! copy_field{
-		($field:ident, $ty:ty) => {
+		($field:ident, $ty:ty, $offset:expr) => {
 			unsafe {
-				let src = ptr.add(old_capacity * offset_of!(Test,$field)).cast::<$ty>();
-				let dst = ptr.add(new_capacity * offset_of!(Test,$field)).cast::<$ty>();
+				let src = ptr.add(old_capacity * $offset).cast::<$ty>();
+				let dst = ptr.add(new_capacity * $offset).cast::<$ty>();
 				ptr::copy_nonoverlapping(src, dst, len);
 			}
 		};
 	}
 
-	// the fields are moved in offset-descending order, and the field at offset 0 is skipped
-	copy_field!(field1,u8);
-	copy_field!(field3,i16);
-	copy_field!(field2,Option<u8>);
+	// the fields are moved in descending order, and the first field is skipped
+	copy_field!(field4,u32,OFFSET_FIELD_4);
+	copy_field!(field3,i16,OFFSET_FIELD_3);
+	copy_field!(field2,Option<u8>,OFFSET_FIELD_2);
 }
 
 // Vec<Test> len 4 cap 4
@@ -79,33 +83,33 @@ impl<A: Allocator> TestColVec<A>{
 			self.buf.grow_one();
 		}
 		macro_rules! write_field{
-			($field:ident, $ty:ty) => {
+			($field:ident, $ty:ty, $offset:expr) => {
 				unsafe {
 					let end = self.as_mut_ptr()
-						.add(self.buf.capacity() * offset_of!(Test,$field))
+						.add(self.buf.capacity() * $offset)
 						.cast::<$ty>()
 						.add(len);
 					ptr::write(end, value.$field);
 				}
 			};
 		}
-		write_field!(field1,u8);
-		write_field!(field2,Option<u8>);
-		write_field!(field3,i16);
-		write_field!(field4,u32);
+		write_field!(field1,u8,OFFSET_FIELD_1);
+		write_field!(field2,Option<u8>,OFFSET_FIELD_2);
+		write_field!(field3,i16,OFFSET_FIELD_3);
+		write_field!(field4,u32,OFFSET_FIELD_4);
 		self.len = len + 1;
 	}
 }
 
 macro_rules! impl_field_access {
-	($(($field:ident, $ty:ty, $slice:ident, $slice_mut:ident)),*) => {
+	($(($offset:expr, $ty:ty, $slice:ident, $slice_mut:ident)),*) => {
 	    impl<A: Allocator> TestColVec<A>{
 			$(
 			    pub const fn $slice(&self) -> &[$ty] {
 					unsafe {
 						core::slice::from_raw_parts(
 							self.as_ptr()
-								.add(self.buf.capacity() * offset_of!(Test,$field))
+								.add(self.buf.capacity() * $offset)
 								.cast::<$ty>(),
 							self.len
 						)
@@ -115,7 +119,7 @@ macro_rules! impl_field_access {
 					unsafe {
 						core::slice::from_raw_parts_mut(
 							self.as_mut_ptr()
-								.add(self.buf.capacity() * offset_of!(Test,$field))
+								.add(self.buf.capacity() * $offset)
 								.cast::<$ty>(),
 							self.len
 						)
@@ -127,10 +131,10 @@ macro_rules! impl_field_access {
 }
 
 impl_field_access!(
-	(field1, u8, field1_slice, field1_slice_mut),
-	(field2, Option<u8>, field2_slice, field2_slice_mut),
-	(field3, i16, field3_slice, field3_slice_mut),
-	(field4, u32, field4_slice, field4_slice_mut)
+	(OFFSET_FIELD_1, u8, field1_slice, field1_slice_mut),
+	(OFFSET_FIELD_2, Option<u8>, field2_slice, field2_slice_mut),
+	(OFFSET_FIELD_3, i16, field3_slice, field3_slice_mut),
+	(OFFSET_FIELD_4, u32, field4_slice, field4_slice_mut)
 );
 
 #[cfg(test)]
