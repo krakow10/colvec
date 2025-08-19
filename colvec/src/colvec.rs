@@ -139,19 +139,24 @@ mod tests {
 
 	#[test]
 	fn it_works() {
+		const LEN:usize = 9;
 		let mut test=TestColVec::new();
-		for _ in 0..9{
+		for _ in 0..LEN{
 			test.push(Test{
 				field1:1,
-				field2:None,
-				field3:-1,
-				field4:256,
+				field2:Some(2),
+				field3:3,
+				field4:4,
 			});
 		}
 
-		assert_eq!( 1, test.field1_slice()[0]);
-		assert_eq!(-1, test.field3_slice()[0]);
-		assert_eq!( 1, test.field1_slice()[8]);
-		assert_eq!(-1, test.field3_slice()[8]);
+		let _1:Vec<_> =core::iter::repeat_n(1, LEN).collect();
+		let _2:Vec<_> =core::iter::repeat_n(Some(2), LEN).collect();
+		let _3:Vec<_> =core::iter::repeat_n(3, LEN).collect();
+		let _4:Vec<_> =core::iter::repeat_n(4, LEN).collect();
+		assert_eq!(&_1,test.field1_slice());
+		assert_eq!(&_2,test.field2_slice());
+		assert_eq!(&_3,test.field3_slice());
+		assert_eq!(&_4,test.field4_slice());
 	}
 }
