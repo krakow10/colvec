@@ -20,8 +20,6 @@ pub(crate) unsafe fn move_fields(
 	new_capacity: usize,
 	len: usize,
 ){
-	// move all fields except the first field
-	// must be moved in offset descending order :(
 	macro_rules! copy_field{
 		($field:ident, $ty:ty) => {
 			unsafe {
@@ -33,9 +31,9 @@ pub(crate) unsafe fn move_fields(
 	}
 
 	// the fields are moved in offset-descending order, and the field at offset 0 is skipped
-	copy_field!(field2,Option<u8>);
-	copy_field!(field3,i16);
 	copy_field!(field1,u8);
+	copy_field!(field3,i16);
+	copy_field!(field2,Option<u8>);
 }
 
 // Vec<Test> len 4 cap 4
