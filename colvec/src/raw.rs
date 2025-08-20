@@ -62,21 +62,13 @@ impl TestRawColVecInner<Global> {
 //   to round up a request of less than 8 bytes to at least 8 bytes.
 // - 4 if elements are moderate-sized (<= 1 KiB).
 // - 1 otherwise, to avoid wasting too much space for very short Vecs.
-const fn min_non_zero_cap(size: usize, align: usize) -> usize {
-	let min_from_size=if size == 1 {
+const fn min_non_zero_cap(size: usize) -> usize {
+	if size == 1 {
 		8
 	} else if size <= 1024 {
 		4
 	} else {
 		1
-	};
-	// the transposed layout must have correct alignment for every field
-	let min_from_align=align;
-	// max of mins
-	if min_from_align<min_from_size{
-		min_from_size
-	}else{
-		min_from_align
 	}
 }
 
@@ -178,15 +170,15 @@ impl<A: Allocator> TestRawColVecInner<A> {
 		}
 
 		// Nothing we can really do about these checks, sadly.
-		let required_cap = len.checked_add(additional).ok_or(CapacityOverflow)?
-			// cap must be a multiple of align due to using
-			// unpadded elem_layout for allocation layout calculation.
-			.next_multiple_of(elem_layout.align());
+		let required_cap = len.checked_add(additional).ok_or(CapacityOverflow)?;
 
 		// This guarantees exponential growth. The doubling cannot overflow
 		// because `cap <= isize::MAX` and the type of `cap` is `usize`.
 		let cap = cmp::max(self.cap * 2, required_cap);
-		let cap = cmp::max(min_non_zero_cap(elem_layout.size(),elem_layout.align()), cap);
+		let cap = cmp::max(min_non_zero_cap(elem_layout.size()), cap);
+		// cap must be a multiple of align due to using the unpadded elem_layout
+		// for the allocation layout calculation in `layout_colvec`.
+		let cap = cap.next_multiple_of(elem_layout.align());
 
 		let new_layout = layout_colvec(cap, elem_layout)?;
 
