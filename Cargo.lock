@@ -14,6 +14,7 @@ version = "0.0.0-squat"
 dependencies = [
  "allocator-api2",
  "colvec-derive",
+ "compile_time_sort",
 ]
 
 [[package]]
@@ -25,6 +26,22 @@ dependencies = [
  "quote",
  "syn",
 ]
+
+[[package]]
+name = "compile_time_sort"
+version = "1.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d1d0df71501b9af51c7348caa2748978dc5a60057c5c66085c7b732bf4fcb92e"
+dependencies = [
+ "paste",
+ "rustversion",
+]
+
+[[package]]
+name = "paste"
+version = "1.0.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
 
 [[package]]
 name = "proc-macro2"
@@ -43,6 +60,12 @@ checksum = "1885c039570dc00dcb4ff087a89e185fd56bae234ddc7f056a945bf36467248d"
 dependencies = [
  "proc-macro2",
 ]
+
+[[package]]
+name = "rustversion"
+version = "1.0.22"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b39cdef0fa800fc44525c84ccb54a029961a8215f9619753635a9c0d2538d46d"
 
 [[package]]
 name = "syn"

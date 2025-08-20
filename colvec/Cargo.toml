@@ -11,3 +11,4 @@ keywords = ["struct", "arrays", "vec", "allocator-api2"]
 [dependencies]
 allocator-api2 = "0.3.0"
 colvec-derive = { version = "0.0.0-squat", path = "../colvec-derive" }
+compile_time_sort = "1.1.4"
