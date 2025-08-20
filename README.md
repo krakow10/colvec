@@ -32,7 +32,10 @@ col.push(Test{
 	field4:8,
 });
 
+assert_eq!(&[1,5], col.field1_slice());
 assert_eq!(&[Some(2),Some(6)], col.field2_slice());
+assert_eq!(&[3,7], col.field3_slice());
+assert_eq!(&[4,8], col.field4_slice());
 ```
 
 #### License
