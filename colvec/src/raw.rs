@@ -72,20 +72,16 @@ const fn min_non_zero_cap(size: usize) -> usize {
 	}
 }
 
-const fn unpadded_elem_size() -> usize{
-	size_of::<u8>() + size_of::<Option<u8>>() + size_of::<i16>() + size_of::<u32>()
-}
-const fn elem_align() -> usize {
-	align_of::<Test>()
-}
 const fn unpadded_elem_layout() -> Layout {
-	unsafe { Layout::from_size_align_unchecked(unpadded_elem_size(), elem_align()) }
+	let size = size_of::<u8>() + size_of::<Option<u8>>() + size_of::<i16>() + size_of::<u32>();
+	let align = align_of::<Test>();
+	unsafe { Layout::from_size_align_unchecked(size, align) }
 }
 
 impl<A: Allocator> TestRawColVec<A> {
 	#[inline]
 	pub(crate) const fn new_in(alloc: A) -> Self {
-		Self { inner: TestRawColVecInner::new_in(alloc, NonZero::new(elem_align()).unwrap()) }
+		Self { inner: TestRawColVecInner::new_in(alloc, NonZero::new(unpadded_elem_layout().align()).unwrap()) }
 	}
 	// #[inline]
 	// #[track_caller]
@@ -96,7 +92,7 @@ impl<A: Allocator> TestRawColVec<A> {
 	// }
 	#[inline]
 	pub(crate) const fn capacity(&self) -> usize {
-		self.inner.capacity(unpadded_elem_size())
+		self.inner.capacity(unpadded_elem_layout().size())
 	}
 	/// Gets a raw pointer to the start of the allocation. Note that this is
 	/// `Unique::dangling()` if `capacity == 0` or `T` is zero-sized. In the former case, you must
