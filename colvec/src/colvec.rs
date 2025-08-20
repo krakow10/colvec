@@ -40,11 +40,26 @@ pub(crate) unsafe fn move_fields(
 	copy_field!(field2,Option<u8>,OFFSET_FIELD_2);
 }
 
+// memory layout diagrams
+
 // Vec<Test> len 4 cap 4
 // [4444 2233 1PPP][4444 2233 1PPP][4444 2233 1PPP][4444 2233 1PPP]
 
 // TestColVec len 4 cap 4
-// [4444][4444][4444][4444][22][22][22][22][33][33][33][33][1][1][1][1]
+// 111122222222333333334444444444444444
+
+// notice how field2 overlaps when the capacity is increased
+
+// TestColVec len 4 cap 8
+// 1111EEEE22222222EEEEEEEE33333333EEEEEEEE4444444444444444EEEEEEEEEEEEEEEE
+
+// if we sort the fields by size decreasing, this cannot happen.
+
+// TestColVec len 4 cap 4
+// 444444444444444422222222333333331111
+
+// TestColVec len 4 cap 8
+// 4444444444444444EEEEEEEEEEEEEEEE22222222EEEEEEEE33333333EEEEEEEE1111EEEE
 
 struct TestColVec<A: Allocator = Global>{
 	buf: TestRawColVec<A>,
