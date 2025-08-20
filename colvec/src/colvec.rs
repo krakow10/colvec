@@ -74,20 +74,22 @@ const fn locate_field(index:usize) -> Field{
 	panic!("No field with index");
 }
 
-pub(crate) unsafe fn move_fields(
+pub(crate) const unsafe fn move_fields(
 	ptr: *mut u8,
 	old_capacity: usize,
 	new_capacity: usize,
 	len: usize,
 ){
 	// the fields are moved in descending-offset order, and the field at 0 offset is skipped
-	for field in FIELDS.iter().rev().skip(1).rev(){
+	let mut i=0;
+	while i<N-1{
 		unsafe {
-			let src = ptr.add(old_capacity * field.offset);
-			let dst = ptr.add(new_capacity * field.offset);
-			let count = len * field.size;
+			let src = ptr.add(old_capacity * FIELDS[i].offset);
+			let dst = ptr.add(new_capacity * FIELDS[i].offset);
+			let count = len * FIELDS[i].size;
 			ptr::copy_nonoverlapping(src, dst, count);
 		}
+		i+=1;
 	}
 }
 
