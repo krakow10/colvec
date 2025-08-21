@@ -3,7 +3,7 @@ source: colvec-derive/src/lib.rs
 expression: formatted
 ---
 pub struct TestColVec<A: ::colvec::alloc::Allocator = ::colvec::alloc::Global> {
-    buf: ::colvec::raw::RawColVec<Test, A>,
+    buf: ::colvec::raw::RawColVec<4usize, Test, A>,
     len: usize,
 }
 impl TestColVec<::colvec::alloc::Global> {
@@ -16,27 +16,18 @@ impl TestColVec<::colvec::alloc::Global> {
         }
     }
 }
-const FIELDS: ::colvec::fields::Fields<4usize> = ::colvec::fields::Fields::from_sizes([
-    size_of::<u8>(),
-    size_of::<Option<u8>>(),
-    size_of::<i16>(),
-    size_of::<u32>(),
-]);
-impl ::colvec::raw::SmuggleOuter for Test {
+impl ::colvec::raw::StructInfo<4usize> for Test {
     const LAYOUT: ::core::alloc::Layout = unsafe {
-        let size = size_of::<u8>() + size_of::<Option<u8>>() + size_of::<i16>()
-            + size_of::<u32>();
+        let size = Self::FIELDS.size();
         let align = align_of::<Test>();
         ::core::alloc::Layout::from_size_align_unchecked(size, align)
     };
-    unsafe fn move_fields(
-        ptr: *mut u8,
-        old_capacity: usize,
-        new_capacity: usize,
-        len: usize,
-    ) {
-        unsafe { FIELDS.move_fields(ptr, old_capacity, new_capacity, len) }
-    }
+    const FIELDS: ::colvec::fields::Fields<4usize> = ::colvec::fields::Fields::from_sizes([
+        size_of::<u8>(),
+        size_of::<Option<u8>>(),
+        size_of::<i16>(),
+        size_of::<u32>(),
+    ]);
 }
 impl<A: ::colvec::alloc::Allocator> TestColVec<A> {
     pub const fn capacity(&self) -> usize {
@@ -58,25 +49,41 @@ impl<A: ::colvec::alloc::Allocator> TestColVec<A> {
         unsafe {
             let end = self
                 .as_mut_ptr()
-                .add(self.buf.capacity() * FIELDS.offset_of(0usize))
+                .add(
+                    self.buf.capacity()
+                        * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
+                            .offset_of(0usize),
+                )
                 .cast::<u8>()
                 .add(len);
             ::core::ptr::write(end, value.field0);
             let end = self
                 .as_mut_ptr()
-                .add(self.buf.capacity() * FIELDS.offset_of(1usize))
+                .add(
+                    self.buf.capacity()
+                        * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
+                            .offset_of(1usize),
+                )
                 .cast::<Option<u8>>()
                 .add(len);
             ::core::ptr::write(end, value.field1);
             let end = self
                 .as_mut_ptr()
-                .add(self.buf.capacity() * FIELDS.offset_of(2usize))
+                .add(
+                    self.buf.capacity()
+                        * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
+                            .offset_of(2usize),
+                )
                 .cast::<i16>()
                 .add(len);
             ::core::ptr::write(end, value.field2);
             let end = self
                 .as_mut_ptr()
-                .add(self.buf.capacity() * FIELDS.offset_of(3usize))
+                .add(
+                    self.buf.capacity()
+                        * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
+                            .offset_of(3usize),
+                )
                 .cast::<u32>()
                 .add(len);
             ::core::ptr::write(end, value.field3);
@@ -90,7 +97,11 @@ impl<A: ::colvec::alloc::Allocator> TestColVec<A> {
             core::slice::from_raw_parts(
                 self
                     .as_ptr()
-                    .add(self.buf.capacity() * FIELDS.offset_of(0usize))
+                    .add(
+                        self.buf.capacity()
+                            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
+                                .offset_of(0usize),
+                    )
                     .cast::<u8>(),
                 self.len,
             )
@@ -101,7 +112,11 @@ impl<A: ::colvec::alloc::Allocator> TestColVec<A> {
             core::slice::from_raw_parts_mut(
                 self
                     .as_mut_ptr()
-                    .add(self.buf.capacity() * FIELDS.offset_of(0usize))
+                    .add(
+                        self.buf.capacity()
+                            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
+                                .offset_of(0usize),
+                    )
                     .cast::<u8>(),
                 self.len,
             )
@@ -112,7 +127,11 @@ impl<A: ::colvec::alloc::Allocator> TestColVec<A> {
             core::slice::from_raw_parts(
                 self
                     .as_ptr()
-                    .add(self.buf.capacity() * FIELDS.offset_of(1usize))
+                    .add(
+                        self.buf.capacity()
+                            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
+                                .offset_of(1usize),
+                    )
                     .cast::<Option<u8>>(),
                 self.len,
             )
@@ -123,7 +142,11 @@ impl<A: ::colvec::alloc::Allocator> TestColVec<A> {
             core::slice::from_raw_parts_mut(
                 self
                     .as_mut_ptr()
-                    .add(self.buf.capacity() * FIELDS.offset_of(1usize))
+                    .add(
+                        self.buf.capacity()
+                            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
+                                .offset_of(1usize),
+                    )
                     .cast::<Option<u8>>(),
                 self.len,
             )
@@ -134,7 +157,11 @@ impl<A: ::colvec::alloc::Allocator> TestColVec<A> {
             core::slice::from_raw_parts(
                 self
                     .as_ptr()
-                    .add(self.buf.capacity() * FIELDS.offset_of(2usize))
+                    .add(
+                        self.buf.capacity()
+                            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
+                                .offset_of(2usize),
+                    )
                     .cast::<i16>(),
                 self.len,
             )
@@ -145,7 +172,11 @@ impl<A: ::colvec::alloc::Allocator> TestColVec<A> {
             core::slice::from_raw_parts_mut(
                 self
                     .as_mut_ptr()
-                    .add(self.buf.capacity() * FIELDS.offset_of(2usize))
+                    .add(
+                        self.buf.capacity()
+                            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
+                                .offset_of(2usize),
+                    )
                     .cast::<i16>(),
                 self.len,
             )
@@ -156,7 +187,11 @@ impl<A: ::colvec::alloc::Allocator> TestColVec<A> {
             core::slice::from_raw_parts(
                 self
                     .as_ptr()
-                    .add(self.buf.capacity() * FIELDS.offset_of(3usize))
+                    .add(
+                        self.buf.capacity()
+                            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
+                                .offset_of(3usize),
+                    )
                     .cast::<u32>(),
                 self.len,
             )
@@ -167,7 +202,11 @@ impl<A: ::colvec::alloc::Allocator> TestColVec<A> {
             core::slice::from_raw_parts_mut(
                 self
                     .as_mut_ptr()
-                    .add(self.buf.capacity() * FIELDS.offset_of(3usize))
+                    .add(
+                        self.buf.capacity()
+                            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
+                                .offset_of(3usize),
+                    )
                     .cast::<u32>(),
                 self.len,
             )

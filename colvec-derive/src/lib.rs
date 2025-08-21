@@ -23,9 +23,10 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 	let colvec_ident_string=format!("{ident}ColVec");
 	let colvec_ident=syn::Ident::new(&colvec_ident_string,ident.span());
 
+	let fields_count=fields.named.len();
 	let colvec = quote!{
 		#vis struct #colvec_ident<A: ::colvec::alloc::Allocator = ::colvec::alloc::Global>{
-			buf: ::colvec::raw::RawColVec<#ident, A>,
+			buf: ::colvec::raw::RawColVec<#fields_count, #ident, A>,
 			len: usize,
 		}
 	};
@@ -40,36 +41,22 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 		}
 	};
 
-	// TODO: dont make global constants
-	let fields_count=fields.named.len();
-	let fields_types=fields.named.iter().map(|field|field.ty.clone());
-	let fields_global = quote! {
-		const FIELDS: ::colvec::fields::Fields<#fields_count> = ::colvec::fields::Fields::from_sizes([
-			#(size_of::<#fields_types>()),*
-		]);
-	};
-
 	// this trait smuggles information about the input type into RawColVec and RawColVecInner
 	let fields_types=fields.named.iter().map(|field|field.ty.clone());
-	let smuggle_outer = quote! {
-		impl ::colvec::raw::SmuggleOuter for #ident{
+	let struct_info = quote! {
+		impl ::colvec::raw::StructInfo<#fields_count> for #ident{
 			const LAYOUT: ::core::alloc::Layout = unsafe {
-				let size = #(size_of::<#fields_types>())+*;
+				let size = Self::FIELDS.size();
 				let align = align_of::<#ident>();
 				::core::alloc::Layout::from_size_align_unchecked(size, align)
 			};
-			unsafe fn move_fields(
-				ptr: *mut u8,
-				old_capacity: usize,
-				new_capacity: usize,
-				len: usize,
-			) {
-				unsafe { FIELDS.move_fields(ptr, old_capacity, new_capacity, len) }
-			}
+			const FIELDS: ::colvec::fields::Fields<#fields_count> = ::colvec::fields::Fields::from_sizes([
+				#(size_of::<#fields_types>()),*
+			]);
 		}
 	};
 
-	let field_indices=0..fields.named.len();
+	let field_indices=0..fields_count;
 	let field_types=fields.named.iter().map(|field|field.ty.clone());
 	let field_idents=fields.named.iter().map(|field|field.ident.as_ref().unwrap().clone());
 	let impls = quote! {
@@ -100,7 +87,7 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 				unsafe {
 					#(
 						let end = self.as_mut_ptr()
-							.add(self.buf.capacity() * FIELDS.offset_of(#field_indices))
+							.add(self.buf.capacity() * <#ident as ::colvec::raw::StructInfo<#fields_count>>::FIELDS.offset_of(#field_indices))
 							.cast::<#field_types>()
 							.add(len);
 						::core::ptr::write(end, value.#field_idents);
@@ -111,7 +98,7 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 		}
 	};
 
-	let field_indices=0..fields.named.len();
+	let field_indices=0..fields_count;
 	let field_types=fields.named.iter().map(|field|field.ty.clone());
 	let field_slice_fn_idents=fields.named.iter().map(|field|{
 		let ident=field.ident.as_ref().unwrap();
@@ -130,7 +117,7 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 					unsafe {
 						core::slice::from_raw_parts(
 							self.as_ptr()
-								.add(self.buf.capacity() * FIELDS.offset_of(#field_indices))
+								.add(self.buf.capacity() * <#ident as ::colvec::raw::StructInfo<#fields_count>>::FIELDS.offset_of(#field_indices))
 								.cast::<#field_types>(),
 							self.len
 						)
@@ -140,7 +127,7 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 					unsafe {
 						core::slice::from_raw_parts_mut(
 							self.as_mut_ptr()
-								.add(self.buf.capacity() * FIELDS.offset_of(#field_indices))
+								.add(self.buf.capacity() * <#ident as ::colvec::raw::StructInfo<#fields_count>>::FIELDS.offset_of(#field_indices))
 								.cast::<#field_types>(),
 							self.len
 						)
@@ -154,8 +141,7 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 		#colvec
 		#global
 
-		#fields_global
-		#smuggle_outer
+		#struct_info
 
 		#impls
 		#field_access

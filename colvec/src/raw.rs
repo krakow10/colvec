@@ -8,6 +8,7 @@ use core::ptr::NonNull;
 use crate::alloc::{Allocator,Global};
 use crate::error::TryReserveError;
 use crate::error::TryReserveErrorKind::*;
+use crate::fields::Fields;
 
 // One central function responsible for reporting capacity overflows. This'll
 // ensure that the code generation related to these panics is minimal as there's
@@ -17,29 +18,24 @@ fn capacity_overflow() -> ! {
 	panic!("capacity overflow");
 }
 
-pub struct RawColVec<T, A: Allocator = Global> {
-	inner: RawColVecInner<A>,
+pub struct RawColVec<const N:usize, T, A: Allocator = Global> {
+	inner: RawColVecInner<N, A>,
 	_marker: PhantomData<T>,
 }
 
-struct RawColVecInner<A: Allocator = Global> {
+struct RawColVecInner<const N:usize, A: Allocator = Global> {
 	ptr: NonNull<u8>,
 	cap: usize,
 	alloc: A,
 }
 
 // TODO: don't do this
-pub trait SmuggleOuter {
+pub trait StructInfo<const N:usize> {
 	const LAYOUT:Layout;
-	unsafe fn move_fields(
-		ptr: *mut u8,
-		old_capacity: usize,
-		new_capacity: usize,
-		len: usize,
-	);
+	const FIELDS:Fields::<N>;
 }
 
-impl<T: SmuggleOuter> RawColVec<T, Global> {
+impl<const N:usize, T: StructInfo<N>> RawColVec<N, T, Global> {
 	#[inline]
 	#[must_use]
 	pub const fn new() -> Self {
@@ -54,7 +50,7 @@ impl<T: SmuggleOuter> RawColVec<T, Global> {
 }
 
 
-impl RawColVecInner<Global> {
+impl<const N:usize> RawColVecInner<N, Global> {
 	// #[must_use]
 	// #[inline]
 	// #[track_caller]
@@ -81,7 +77,7 @@ const fn min_non_zero_cap(size: usize) -> usize {
 	}
 }
 
-impl<T: SmuggleOuter, A: Allocator> RawColVec<T, A> {
+impl<const N:usize, T: StructInfo<N>, A: Allocator> RawColVec<N, T, A> {
 	#[inline]
 	pub const fn new_in(alloc: A) -> Self {
 		Self {
@@ -110,11 +106,11 @@ impl<T: SmuggleOuter, A: Allocator> RawColVec<T, A> {
 	#[inline(never)]
 	#[track_caller]
 	pub fn grow_one(&mut self) {
-		self.inner.grow_one::<T>(T::LAYOUT)
+		self.inner.grow_one(T::LAYOUT,&T::FIELDS)
 	}
 }
 
-impl<A: Allocator> RawColVecInner<A> {
+impl<const N:usize, A: Allocator> RawColVecInner<N, A> {
 	#[inline]
 	const fn new_in(alloc: A, align: NonZero<usize>) -> Self {
 		let ptr = NonNull::without_provenance(align);
@@ -127,8 +123,8 @@ impl<A: Allocator> RawColVecInner<A> {
 	}
 	#[inline]
 	#[track_caller]
-	fn grow_one<T: SmuggleOuter>(&mut self, elem_layout: Layout) {
-		if let Err(err) = self.grow_amortized::<T>(self.cap, 1, elem_layout) {
+	fn grow_one(&mut self, elem_layout: Layout, fields: &Fields<N>) {
+		if let Err(err) = self.grow_amortized(self.cap, 1, elem_layout, fields) {
 			handle_error(err);
 		}
 	}
@@ -156,11 +152,12 @@ impl<A: Allocator> RawColVecInner<A> {
 		self.ptr = ptr.cast();
 		self.cap = cap;
 	}
-	fn grow_amortized<T: SmuggleOuter>(
+	fn grow_amortized(
 		&mut self,
 		len: usize,
 		additional: usize,
 		elem_layout: Layout,
+		fields: &Fields<N>,
 	) -> Result<(), TryReserveError> {
 		// This is ensured by the calling contexts.
 		debug_assert!(additional > 0);
@@ -184,10 +181,11 @@ impl<A: Allocator> RawColVecInner<A> {
 
 		let new_layout = layout_colvec(cap, elem_layout)?;
 
-		let ptr = finish_grow::<T, A>(
+		let ptr = finish_grow(
 			new_layout,
 			self.current_memory(elem_layout),
 			&mut self.alloc,
+			fields,
 			self.cap,
 			cap,
 			len,
@@ -202,16 +200,16 @@ impl<A: Allocator> RawColVecInner<A> {
 // not marked inline(never) since we want optimizers to be able to observe the specifics of this
 // function, see tests/codegen/vec-reserve-extend.rs.
 #[cold]
-fn finish_grow<T,A>(
+fn finish_grow<const N:usize,A>(
 	new_layout: Layout,
 	current_memory: Option<(NonNull<u8>, Layout)>,
 	alloc: &mut A,
+	fields: &Fields<N>,
 	old_capacity: usize,
 	new_capacity: usize,
 	len: usize,
 ) -> Result<NonNull<[u8]>, TryReserveError>
 where
-	T: SmuggleOuter,
 	A: Allocator,
 {
 	alloc_guard(new_layout.size())?;
@@ -227,7 +225,7 @@ where
 			return Err(AllocError { layout: new_layout }.into());
 		};
 
-		unsafe{ T::move_fields(ptr.as_ptr(), old_capacity, new_capacity, len) }
+		unsafe{ fields.move_fields(ptr.as_ptr(), old_capacity, new_capacity, len) }
 
 		Ok(region)
 	} else {

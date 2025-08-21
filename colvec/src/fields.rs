@@ -48,6 +48,15 @@ impl<const N:usize> Fields<N>{
 			sorted_fields,
 		}
 	}
+	pub const fn size(&self)->usize{
+		let mut size=0;
+		let mut i=0;
+		while i<N{
+			size+=self.sorted_fields[i].size;
+			i+=1;
+		}
+		size
+	}
 	pub const fn offset_of(&self,index:usize)->usize{
 		self.field_id_to_offset[index]
 	}
