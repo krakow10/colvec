@@ -1,17 +1,14 @@
-use core::alloc::{Layout};
+use core::alloc::Layout;
 use core::cmp;
 use core::hint;
-use core::ptr::NonNull;
+use core::marker::PhantomData;
 use core::num::NonZero;
+use core::ptr::NonNull;
 
 use crate::error::TryReserveError;
 use crate::error::TryReserveErrorKind::*;
 
 use allocator_api2::alloc::{Allocator, Global};
-
-// le type
-use crate::colvec::Test;
-use crate::colvec::move_fields;
 
 // One central function responsible for reporting capacity overflows. This'll
 // ensure that the code generation related to these panics is minimal as there's
@@ -21,8 +18,9 @@ fn capacity_overflow() -> ! {
 	panic!("capacity overflow");
 }
 
-pub(crate) struct TestRawColVec<A: Allocator = Global> {
+pub struct TestRawColVec<T, A: Allocator = Global> {
 	inner: TestRawColVecInner<A>,
+	_marker: PhantomData<T>,
 }
 
 struct TestRawColVecInner<A: Allocator = Global> {
@@ -31,7 +29,18 @@ struct TestRawColVecInner<A: Allocator = Global> {
 	alloc: A,
 }
 
-impl TestRawColVec<Global> {
+// TODO: don't do this
+pub trait SmuggleOuter {
+	const LAYOUT:Layout;
+	unsafe fn move_fields(
+		ptr: *mut u8,
+		old_capacity: usize,
+		new_capacity: usize,
+		len: usize,
+	);
+}
+
+impl<T: SmuggleOuter> TestRawColVec<T, Global> {
 	#[must_use]
 	pub(crate) const fn new() -> Self {
 		Self::new_in(Global)
@@ -72,16 +81,13 @@ const fn min_non_zero_cap(size: usize) -> usize {
 	}
 }
 
-const fn unpadded_elem_layout() -> Layout {
-	let size = size_of::<u8>() + size_of::<Option<u8>>() + size_of::<i16>() + size_of::<u32>();
-	let align = align_of::<Test>();
-	unsafe { Layout::from_size_align_unchecked(size, align) }
-}
-
-impl<A: Allocator> TestRawColVec<A> {
+impl<T: SmuggleOuter, A: Allocator> TestRawColVec<T, A> {
 	#[inline]
 	pub(crate) const fn new_in(alloc: A) -> Self {
-		Self { inner: TestRawColVecInner::new_in(alloc, NonZero::new(unpadded_elem_layout().align()).unwrap()) }
+		Self {
+			inner: TestRawColVecInner::new_in(alloc, NonZero::new(T::LAYOUT.align()).unwrap()),
+			_marker: PhantomData,
+		}
 	}
 	// #[inline]
 	// #[track_caller]
@@ -92,7 +98,7 @@ impl<A: Allocator> TestRawColVec<A> {
 	// }
 	#[inline]
 	pub(crate) const fn capacity(&self) -> usize {
-		self.inner.capacity(unpadded_elem_layout().size())
+		self.inner.capacity(T::LAYOUT.size())
 	}
 	/// Gets a raw pointer to the start of the allocation. Note that this is
 	/// `Unique::dangling()` if `capacity == 0` or `T` is zero-sized. In the former case, you must
@@ -104,7 +110,7 @@ impl<A: Allocator> TestRawColVec<A> {
 	#[inline(never)]
 	#[track_caller]
 	pub(crate) fn grow_one(&mut self) {
-		self.inner.grow_one(unpadded_elem_layout())
+		self.inner.grow_one::<T>(T::LAYOUT)
 	}
 }
 
@@ -121,8 +127,8 @@ impl<A: Allocator> TestRawColVecInner<A> {
 	}
 	#[inline]
 	#[track_caller]
-	fn grow_one(&mut self, elem_layout: Layout) {
-		if let Err(err) = self.grow_amortized(self.cap, 1, elem_layout) {
+	fn grow_one<T: SmuggleOuter>(&mut self, elem_layout: Layout) {
+		if let Err(err) = self.grow_amortized::<T>(self.cap, 1, elem_layout) {
 			handle_error(err);
 		}
 	}
@@ -150,7 +156,7 @@ impl<A: Allocator> TestRawColVecInner<A> {
 		self.ptr = ptr.cast();
 		self.cap = cap;
 	}
-	fn grow_amortized(
+	fn grow_amortized<T: SmuggleOuter>(
 		&mut self,
 		len: usize,
 		additional: usize,
@@ -178,7 +184,7 @@ impl<A: Allocator> TestRawColVecInner<A> {
 
 		let new_layout = layout_colvec(cap, elem_layout)?;
 
-		let ptr = finish_grow(
+		let ptr = finish_grow::<T, A>(
 			new_layout,
 			self.current_memory(elem_layout),
 			&mut self.alloc,
@@ -196,7 +202,7 @@ impl<A: Allocator> TestRawColVecInner<A> {
 // not marked inline(never) since we want optimizers to be able to observe the specifics of this
 // function, see tests/codegen/vec-reserve-extend.rs.
 #[cold]
-fn finish_grow<A>(
+fn finish_grow<T,A>(
 	new_layout: Layout,
 	current_memory: Option<(NonNull<u8>, Layout)>,
 	alloc: &mut A,
@@ -205,6 +211,7 @@ fn finish_grow<A>(
 	len: usize,
 ) -> Result<NonNull<[u8]>, TryReserveError>
 where
+	T: SmuggleOuter,
 	A: Allocator,
 {
 	alloc_guard(new_layout.size())?;
@@ -220,7 +227,7 @@ where
 			return Err(AllocError { layout: new_layout }.into());
 		};
 
-		unsafe{ move_fields(ptr.as_ptr(), old_capacity, new_capacity, len) }
+		unsafe{ T::move_fields(ptr.as_ptr(), old_capacity, new_capacity, len) }
 
 		Ok(region)
 	} else {

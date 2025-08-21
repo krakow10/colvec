@@ -1,5 +1,6 @@
-use crate::raw::TestRawColVec;
+use crate::raw::{SmuggleOuter, TestRawColVec};
 
+use core::alloc::Layout;
 use core::ptr;
 
 use allocator_api2::alloc::{Allocator, Global};
@@ -11,6 +12,24 @@ pub(crate) struct Test{
 	field1:Option<u8>,
 	field2:i16,
 	field3:u32,
+}
+
+const fn unpadded_elem_layout() -> Layout {
+	let size = size_of::<u8>() + size_of::<Option<u8>>() + size_of::<i16>() + size_of::<u32>();
+	let align = align_of::<Test>();
+	unsafe { Layout::from_size_align_unchecked(size, align) }
+}
+
+impl SmuggleOuter for Test{
+	const LAYOUT: Layout = unpadded_elem_layout();
+	unsafe fn move_fields(
+		ptr: *mut u8,
+		old_capacity: usize,
+		new_capacity: usize,
+		len: usize,
+	) {
+		unsafe { move_fields(ptr, old_capacity, new_capacity, len) }
+	}
 }
 
 // calculate array of offsets from sorted list of sizes
@@ -74,7 +93,7 @@ const fn locate_field(index:usize) -> Field{
 	panic!("No field with index");
 }
 
-pub(crate) const unsafe fn move_fields(
+const unsafe fn move_fields(
 	ptr: *mut u8,
 	old_capacity: usize,
 	new_capacity: usize,
@@ -115,7 +134,7 @@ pub(crate) const unsafe fn move_fields(
 // 4444444444444444EEEEEEEEEEEEEEEE22222222EEEEEEEE33333333EEEEEEEE1111EEEE
 
 struct TestColVec<A: Allocator = Global>{
-	buf: TestRawColVec<A>,
+	buf: TestRawColVec<Test, A>,
 	len: usize,
 }
 
