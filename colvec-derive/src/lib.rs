@@ -35,18 +35,19 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 
 	// TODO: dont make global constants
 	let fields_count=fields.named.len();
-	let fields = quote! {
+	let fields_types=fields.named.iter().map(|field|field.ty.clone());
+	let fields_global = quote! {
 		const FIELDS: ::colvec::fields::Fields<#fields_count> = ::colvec::fields::Fields::from_sizes([
-			size_of::<u8>(),
-			size_of::<i32>(),
+			#(size_of::<#fields_types>()),*
 		]);
 	};
 
 	// this trait smuggles information about the input type into RawColVec and RawColVecInner
+	let fields_types=fields.named.iter().map(|field|field.ty.clone());
 	let smuggle_outer = quote! {
 		impl ::colvec::raw::SmuggleOuter for #ident{
 			const LAYOUT: ::core::alloc::Layout = unsafe {
-				let size = size_of::<u8>() + size_of::<i32>();
+				let size = #(size_of::<#fields_types>())+*;
 				let align = align_of::<#ident>();
 				::core::alloc::Layout::from_size_align_unchecked(size, align)
 			};
@@ -61,6 +62,9 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 		}
 	};
 
+	let field_indices=0..fields.named.len();
+	let field_types=fields.named.iter().map(|field|field.ty.clone());
+	let field_idents=fields.named.iter().map(|field|field.ident.as_ref().unwrap().clone());
 	let impls = quote! {
 		impl<A: ::colvec::alloc::Allocator> #colvec_ident<A>{
 			pub const fn capacity(&self) -> usize {
@@ -86,65 +90,64 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 				if len == self.buf.capacity() {
 					self.buf.grow_one();
 				}
-				macro_rules! write_field{
-					($field:ident, $ty:ty, $offset:expr) => {
-						unsafe {
-							let end = self.as_mut_ptr()
-								.add(self.buf.capacity() * $offset)
-								.cast::<$ty>()
-								.add(len);
-							::core::ptr::write(end, value.$field);
-						}
-					};
+				unsafe {
+					#(
+						let end = self.as_mut_ptr()
+							.add(self.buf.capacity() * FIELDS.offset_of(#field_indices))
+							.cast::<#field_types>()
+							.add(len);
+						::core::ptr::write(end, value.#field_idents);
+					)*
 				}
-				write_field!(field0,u8,FIELDS.offset_of(0));
-				write_field!(field1,i32,FIELDS.offset_of(1));
 				self.len = len + 1;
 			}
 		}
 	};
 
+	let field_indices=0..fields.named.len();
+	let field_types=fields.named.iter().map(|field|field.ty.clone());
+	let field_slice_fn_idents=fields.named.iter().map(|field|{
+		let ident=field.ident.as_ref().unwrap();
+		let slice_ident=format!("{ident}_slice");
+		syn::Ident::new(&slice_ident,ident.span())
+	});
+	let field_slice_mut_fn_idents=fields.named.iter().map(|field|{
+		let ident=field.ident.as_ref().unwrap();
+		let slice_ident=format!("{ident}_slice_mut");
+		syn::Ident::new(&slice_ident,ident.span())
+	});
 	let field_access = quote! {
-		macro_rules! impl_field_access {
-			($(($offset:expr, $ty:ty, $slice:ident, $slice_mut:ident)),*) => {
-				impl<A: ::colvec::alloc::Allocator> #colvec_ident<A>{
-					$(
-						pub const fn $slice(&self) -> &[$ty] {
-							unsafe {
-								core::slice::from_raw_parts(
-									self.as_ptr()
-										.add(self.buf.capacity() * $offset)
-										.cast::<$ty>(),
-									self.len
-								)
-							}
-						}
-						pub const fn $slice_mut(&mut self) -> &mut [$ty] {
-							unsafe {
-								core::slice::from_raw_parts_mut(
-									self.as_mut_ptr()
-										.add(self.buf.capacity() * $offset)
-										.cast::<$ty>(),
-									self.len
-								)
-							}
-						}
-					)*
+		impl<A: ::colvec::alloc::Allocator> #colvec_ident<A>{
+			#(
+				pub const fn #field_slice_fn_idents(&self) -> &[#field_types] {
+					unsafe {
+						core::slice::from_raw_parts(
+							self.as_ptr()
+								.add(self.buf.capacity() * FIELDS.offset_of(#field_indices))
+								.cast::<#field_types>(),
+							self.len
+						)
+					}
 				}
-			};
+				pub const fn #field_slice_mut_fn_idents(&mut self) -> &mut [#field_types] {
+					unsafe {
+						core::slice::from_raw_parts_mut(
+							self.as_mut_ptr()
+								.add(self.buf.capacity() * FIELDS.offset_of(#field_indices))
+								.cast::<#field_types>(),
+							self.len
+						)
+					}
+				}
+			)*
 		}
-
-		impl_field_access!(
-			(FIELDS.offset_of(0), u8, field0_slice, field0_slice_mut),
-			(FIELDS.offset_of(1), i32, field1_slice, field1_slice_mut)
-		);
 	};
 
 	quote! {
 		#colvec
 		#global
 
-		#fields
+		#fields_global
 		#smuggle_outer
 
 		#impls
