@@ -1,11 +1,18 @@
+#[cfg(not(test))]
 use proc_macro::TokenStream;
+#[cfg(test)]
+use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input,DeriveInput};
+use syn::DeriveInput;
 
+#[cfg(not(test))]
 #[proc_macro_derive(ColVec)]
 pub fn colvec_derive(input:TokenStream)->TokenStream{
-	let input:DeriveInput=parse_macro_input!(input);
+	let input:DeriveInput=syn::parse_macro_input!(input);
+	colvec_derive_inner(input)
+}
 
+fn colvec_derive_inner(input:DeriveInput)->TokenStream{
 	match input.data{
 		syn::Data::Struct(syn::DataStruct{fields:syn::Fields::Named(fields_named),..})=>derive_struct(input.ident,input.vis,fields_named),
 		_=>unimplemented!("Only structs are supported"),
@@ -153,4 +160,33 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 		#impls
 		#field_access
 	}.into()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use syn::parse_quote;
+
+	#[test]
+	fn snapshot_test1() {
+		let test1:syn::ItemStruct = parse_quote! {
+			pub struct Test{
+				field0:u8,
+				field1:Option<u8>,
+				field2:i16,
+				field3:u32,
+			}
+		};
+
+		let output = colvec_derive_inner(test1.into());
+
+		// pretend it outputs a file
+        let as_file = syn::parse_file(&output.to_string()).unwrap();
+
+		// format it in a pretty way
+        let formatted = prettyplease::unparse(&as_file);
+
+        // snapshot-test it
+        insta::assert_snapshot!(formatted);
+	}
 }

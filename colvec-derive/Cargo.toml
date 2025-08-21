@@ -13,6 +13,10 @@ proc-macro=true
 
 [dependencies]
 allocator-api2 = "0.3.0"
-proc-macro2 = "1.0.97"
 quote = "1.0.40"
 syn = { version = "2.0.106", features = ["full"] }
+
+[dev-dependencies]
+insta = "1.43.1"
+prettyplease = "0.2.37"
+proc-macro2 = "1.0.97"
