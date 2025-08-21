@@ -104,6 +104,42 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 		}
 	};
 
+	let field_access = quote! {
+		macro_rules! impl_field_access {
+			($(($offset:expr, $ty:ty, $slice:ident, $slice_mut:ident)),*) => {
+				impl<A: ::colvec::alloc::Allocator> #colvec_ident<A>{
+					$(
+						pub const fn $slice(&self) -> &[$ty] {
+							unsafe {
+								core::slice::from_raw_parts(
+									self.as_ptr()
+										.add(self.buf.capacity() * $offset)
+										.cast::<$ty>(),
+									self.len
+								)
+							}
+						}
+						pub const fn $slice_mut(&mut self) -> &mut [$ty] {
+							unsafe {
+								core::slice::from_raw_parts_mut(
+									self.as_mut_ptr()
+										.add(self.buf.capacity() * $offset)
+										.cast::<$ty>(),
+									self.len
+								)
+							}
+						}
+					)*
+				}
+			};
+		}
+
+		impl_field_access!(
+			(FIELDS.offset_of(0), u8, field0_slice, field0_slice_mut),
+			(FIELDS.offset_of(1), i32, field1_slice, field1_slice_mut)
+		);
+	};
+
 	quote! {
 		#colvec
 		#global
@@ -112,5 +148,6 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 		#smuggle_outer
 
 		#impls
+		#field_access
 	}.into()
 }

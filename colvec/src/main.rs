@@ -17,7 +17,7 @@ mod tests {
 			field0:1,
 			field1:-1,
 		});
-		// assert_eq!( 1, test.field1_slice()[0]);
-		// assert_eq!(-1, test.field2_slice()[0]);
+		assert_eq!( 1, test.field0_slice()[0]);
+		assert_eq!(-1, test.field1_slice()[0]);
 	}
 }
