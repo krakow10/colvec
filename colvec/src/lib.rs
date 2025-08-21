@@ -2,8 +2,13 @@ pub use colvec_derive::ColVec;
 
 mod colvec;
 mod error;
-mod fields;
-mod raw;
+
+// used from generated code
+
+#[doc(hidden)]
+pub mod fields;
+#[doc(hidden)]
+pub mod raw;
 
 #[cfg(test)]
 mod tests {

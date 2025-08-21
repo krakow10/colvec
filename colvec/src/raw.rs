@@ -18,12 +18,12 @@ fn capacity_overflow() -> ! {
 	panic!("capacity overflow");
 }
 
-pub struct TestRawColVec<T, A: Allocator = Global> {
-	inner: TestRawColVecInner<A>,
+pub struct RawColVec<T, A: Allocator = Global> {
+	inner: RawColVecInner<A>,
 	_marker: PhantomData<T>,
 }
 
-struct TestRawColVecInner<A: Allocator = Global> {
+struct RawColVecInner<A: Allocator = Global> {
 	ptr: NonNull<u8>,
 	cap: usize,
 	alloc: A,
@@ -40,9 +40,9 @@ pub trait SmuggleOuter {
 	);
 }
 
-impl<T: SmuggleOuter> TestRawColVec<T, Global> {
+impl<T: SmuggleOuter> RawColVec<T, Global> {
 	#[must_use]
-	pub(crate) const fn new() -> Self {
+	pub const fn new() -> Self {
 		Self::new_in(Global)
 	}
 	// #[must_use]
@@ -54,7 +54,7 @@ impl<T: SmuggleOuter> TestRawColVec<T, Global> {
 }
 
 
-impl TestRawColVecInner<Global> {
+impl RawColVecInner<Global> {
 	// #[must_use]
 	// #[inline]
 	// #[track_caller]
@@ -81,40 +81,40 @@ const fn min_non_zero_cap(size: usize) -> usize {
 	}
 }
 
-impl<T: SmuggleOuter, A: Allocator> TestRawColVec<T, A> {
+impl<T: SmuggleOuter, A: Allocator> RawColVec<T, A> {
 	#[inline]
-	pub(crate) const fn new_in(alloc: A) -> Self {
+	pub const fn new_in(alloc: A) -> Self {
 		Self {
-			inner: TestRawColVecInner::new_in(alloc, NonZero::new(T::LAYOUT.align()).unwrap()),
+			inner: RawColVecInner::new_in(alloc, NonZero::new(T::LAYOUT.align()).unwrap()),
 			_marker: PhantomData,
 		}
 	}
 	// #[inline]
 	// #[track_caller]
-	// pub(crate) fn with_capacity_in(capacity: usize, alloc: A) -> Self {
+	// pub fn with_capacity_in(capacity: usize, alloc: A) -> Self {
 	//     Self {
 	//         inner: RawVecInner::with_capacity_in(capacity, alloc, Layout::new::<Test>()),
 	//     }
 	// }
 	#[inline]
-	pub(crate) const fn capacity(&self) -> usize {
+	pub const fn capacity(&self) -> usize {
 		self.inner.capacity(T::LAYOUT.size())
 	}
 	/// Gets a raw pointer to the start of the allocation. Note that this is
 	/// `Unique::dangling()` if `capacity == 0` or `T` is zero-sized. In the former case, you must
 	/// be careful.
 	#[inline]
-	pub(crate) const fn ptr(&self) -> *mut u8 {
+	pub const fn ptr(&self) -> *mut u8 {
 		self.inner.ptr.as_ptr()
 	}
 	#[inline(never)]
 	#[track_caller]
-	pub(crate) fn grow_one(&mut self) {
+	pub fn grow_one(&mut self) {
 		self.inner.grow_one::<T>(T::LAYOUT)
 	}
 }
 
-impl<A: Allocator> TestRawColVecInner<A> {
+impl<A: Allocator> RawColVecInner<A> {
 	#[inline]
 	const fn new_in(alloc: A, align: NonZero<usize>) -> Self {
 		let ptr = NonNull::without_provenance(align);

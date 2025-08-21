@@ -1,4 +1,4 @@
-use crate::raw::{SmuggleOuter, TestRawColVec};
+use crate::raw::{SmuggleOuter, RawColVec};
 use crate::fields::Fields;
 
 use core::alloc::Layout;
@@ -64,7 +64,7 @@ const FIELDS:Fields<N> =Fields::from_sizes([
 // 4444444444444444EEEEEEEEEEEEEEEE22222222EEEEEEEE33333333EEEEEEEE1111EEEE
 
 struct TestColVec<A: Allocator = Global>{
-	buf: TestRawColVec<Test, A>,
+	buf: RawColVec<Test, A>,
 	len: usize,
 }
 
@@ -72,7 +72,7 @@ impl TestColVec<Global>{
 	#[inline]
 	#[must_use]
 	pub const fn new() -> Self {
-		Self { buf: TestRawColVec::new(), len: 0 }
+		Self { buf: RawColVec::new(), len: 0 }
 	}
 }
 impl<A: Allocator> TestColVec<A>{
