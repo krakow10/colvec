@@ -1,10 +1,9 @@
-use crate::raw::{SmuggleOuter, RawColVec};
+use crate::alloc::{Allocator,Global};
 use crate::fields::Fields;
+use crate::raw::{SmuggleOuter,RawColVec};
 
 use core::alloc::Layout;
 use core::ptr;
-
-use allocator_api2::alloc::{Allocator, Global};
 
 // [4444 2233 1PPP]
 

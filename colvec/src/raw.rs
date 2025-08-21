@@ -5,10 +5,9 @@ use core::marker::PhantomData;
 use core::num::NonZero;
 use core::ptr::NonNull;
 
+use crate::alloc::{Allocator,Global};
 use crate::error::TryReserveError;
 use crate::error::TryReserveErrorKind::*;
-
-use allocator_api2::alloc::{Allocator, Global};
 
 // One central function responsible for reporting capacity overflows. This'll
 // ensure that the code generation related to these panics is minimal as there's
