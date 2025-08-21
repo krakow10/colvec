@@ -1,8 +1,10 @@
-pub struct Fields<const N:usize>([Field;N]);
+pub struct Fields<const N:usize>{
+	field_id_to_offset:[usize;N],
+	sorted_fields:[Field;N],
+}
 
 #[derive(Clone,Copy)]
 struct Field{
-	index:usize,
 	size:usize,
 	offset:usize,
 }
@@ -25,14 +27,15 @@ impl<const N:usize> Fields<N>{
 		// sort by size, and index as a tie breaker
 		compile_time_sort::sort_u64_slice(&mut sides_encoded);
 
-		let mut fields=[Field{index:0,size:0,offset:0};N];
+		let mut field_id_to_offset=[0;N];
+		let mut sorted_fields=[Field{size:0,offset:0};N];
 		let mut i=0;
 		let mut offset=0;
 		while i<N{
 			// decode back into index and size
 			let (index,size)=(sides_encoded[N-i-1] as u32 as usize, (sides_encoded[N-i-1]>>32) as u32 as usize);
-			fields[N-i-1]=Field{
-				index,
+			field_id_to_offset[index]=offset;
+			sorted_fields[N-i-1]=Field{
 				size,
 				offset,
 			};
@@ -40,17 +43,13 @@ impl<const N:usize> Fields<N>{
 			i+=1;
 		}
 
-		Fields(fields)
+		Fields{
+			field_id_to_offset,
+			sorted_fields,
+		}
 	}
 	pub const fn offset_of(&self,index:usize)->usize{
-		let mut i=0;
-		while i<N{
-			if self.0[i].index==index{
-				return self.0[i].offset;
-			}
-			i+=1;
-		}
-		panic!("No field with index");
+		self.field_id_to_offset[index]
 	}
 	pub const unsafe fn move_fields(
 		&self,
@@ -63,9 +62,9 @@ impl<const N:usize> Fields<N>{
 		let mut i=0;
 		while i<N-1{
 			unsafe {
-				let src = ptr.add(old_capacity * self.0[i].offset);
-				let dst = ptr.add(new_capacity * self.0[i].offset);
-				let count = len * self.0[i].size;
+				let src = ptr.add(old_capacity * self.sorted_fields[i].offset);
+				let dst = ptr.add(new_capacity * self.sorted_fields[i].offset);
+				let count = len * self.sorted_fields[i].size;
 				core::ptr::copy_nonoverlapping(src, dst, count);
 			}
 			i+=1;
