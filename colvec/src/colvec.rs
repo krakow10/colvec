@@ -7,7 +7,7 @@ use core::ptr;
 
 // [4444 2233 1PPP]
 
-pub(crate) struct Test{
+pub struct Test{
 	field0:u8,
 	field1:Option<u8>,
 	field2:i16,
@@ -62,7 +62,7 @@ const FIELDS:Fields<N> =Fields::from_sizes([
 // TestColVec len 4 cap 8
 // 4444444444444444EEEEEEEEEEEEEEEE22222222EEEEEEEE33333333EEEEEEEE1111EEEE
 
-struct TestColVec<A: Allocator = Global>{
+pub struct TestColVec<A: Allocator = Global>{
 	buf: RawColVec<Test, A>,
 	len: usize,
 }
