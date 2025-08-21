@@ -28,4 +28,16 @@ mod tests {
 		assert_eq!(&[1,255], test.field0_slice());
 		assert_eq!(&[-2,-1], test.field1_slice());
 	}
+
+	#[test]
+	fn test_zst(){
+		#[derive(ColVec)]
+		struct ZST{}
+
+		let mut test=ZSTColVec::new();
+		test.push(ZST{});
+		test.push(ZST{});
+
+		// assert_eq!(2, test.len());
+	}
 }
