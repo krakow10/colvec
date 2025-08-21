@@ -12,7 +12,7 @@ mod tests {
 
 	#[test]
 	fn it_works() {
-		// let mut test=TestColVec::new();
+		let mut test=TestColVec::new();
 		// test.push(Test{
 		// 	field1:1,
 		// 	field2:-1,
