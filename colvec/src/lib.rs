@@ -1,6 +1,5 @@
 pub use colvec_derive::ColVec;
 
-pub mod colvec;
 mod error;
 
 // used from generated code
