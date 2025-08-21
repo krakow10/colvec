@@ -61,6 +61,49 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 		}
 	};
 
+	let impls = quote! {
+		impl<A: ::colvec::alloc::Allocator> #colvec_ident<A>{
+			pub const fn capacity(&self) -> usize {
+				self.buf.capacity()
+			}
+			#[inline]
+			const fn as_ptr(&self) -> *const u8 {
+				// We shadow the slice method of the same name to avoid going through
+				// `deref`, which creates an intermediate reference.
+				self.buf.ptr()
+			}
+			#[inline]
+			const fn as_mut_ptr(&mut self) -> *mut u8 {
+				// We shadow the slice method of the same name to avoid going through
+				// `deref_mut`, which creates an intermediate reference.
+				self.buf.ptr()
+			}
+			pub fn push(&mut self, value: #ident){
+				// Inform codegen that the length does not change across grow_one().
+				let len = self.len;
+				// This will panic or abort if we would allocate > isize::MAX bytes
+				// or if the length increment would overflow for zero-sized types.
+				if len == self.buf.capacity() {
+					self.buf.grow_one();
+				}
+				macro_rules! write_field{
+					($field:ident, $ty:ty, $offset:expr) => {
+						unsafe {
+							let end = self.as_mut_ptr()
+								.add(self.buf.capacity() * $offset)
+								.cast::<$ty>()
+								.add(len);
+							::core::ptr::write(end, value.$field);
+						}
+					};
+				}
+				write_field!(field0,u8,FIELDS.offset_of(0));
+				write_field!(field1,i32,FIELDS.offset_of(1));
+				self.len = len + 1;
+			}
+		}
+	};
+
 	quote! {
 		#colvec
 		#global
@@ -68,5 +111,6 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 		#fields
 		#smuggle_outer
 
+		#impls
 	}.into()
 }
