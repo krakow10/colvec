@@ -40,6 +40,7 @@ pub trait SmuggleOuter {
 }
 
 impl<T: SmuggleOuter> RawColVec<T, Global> {
+	#[inline]
 	#[must_use]
 	pub const fn new() -> Self {
 		Self::new_in(Global)
