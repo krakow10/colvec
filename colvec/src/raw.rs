@@ -29,6 +29,8 @@ pub struct RawColVec<const N:usize, T, A: Allocator> {
 	inner: RawColVecInner<N, A>,
 	_marker: PhantomData<T>,
 }
+unsafe impl<const N:usize, T: Send, A: Allocator> Send for RawColVec<N, T, A> {}
+unsafe impl<const N:usize, T: Sync, A: Allocator> Sync for RawColVec<N, T, A> {}
 
 struct RawColVecInner<const N:usize, A: Allocator> {
 	ptr: NonNull<u8>,
