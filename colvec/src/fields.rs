@@ -85,4 +85,34 @@ impl<const N:usize> Fields<N>{
 			i+=1;
 		}
 	}
+	// SAFETY:
+	// src must be aligned
+	// dst must be aligned
+	// src must not equal dst
+	// src_capacity must be a multiple of <T as StructInfo>::LAYOUT.align()
+	// dst_capacity must be a multiple of <T as StructInfo>::LAYOUT.align()
+	// dst_start_index + count must not exceed dst_capacity
+	pub const unsafe fn move_fields(
+		&self,
+		src: *const u8,
+		dst: *mut u8,
+		src_capacity: usize,
+		dst_capacity: usize,
+		dst_start_index: usize,
+		count: usize,
+	){
+		debug_assert!(dst_start_index+count<=dst_capacity);
+		// the fields are moved in any order, field 0 is not skipped
+		let mut i=0;
+		while i<N{
+			unsafe {
+				let src = src.add(src_capacity * self.sorted_fields[i].offset);
+				let dst = dst.add(dst_capacity * self.sorted_fields[i].offset);
+				let dst = dst.add(dst_start_index * self.sorted_fields[i].size);
+				let count = count * self.sorted_fields[i].size;
+				core::ptr::copy_nonoverlapping(src, dst, count);
+			}
+			i+=1;
+		}
+	}
 }
