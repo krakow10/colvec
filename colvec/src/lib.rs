@@ -10,3 +10,5 @@ pub mod alloc;
 pub mod fields;
 #[doc(hidden)]
 pub mod raw;
+#[doc(hidden)]
+pub mod slice;
