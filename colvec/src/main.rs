@@ -48,4 +48,30 @@ mod tests {
 
 		assert_eq!(2, test.len());
 	}
+
+	#[test]
+	fn test_append() {
+		#[derive(ColVec)]
+		struct Bug{
+			is_red:bool,
+			coolness:u64,
+		}
+
+		let mut bugs=BugColVec::with_capacity(2);
+		bugs.push(Bug{
+			is_red:false,
+			coolness:1,
+		});
+
+		let mut cool_bugs=BugColVec::with_capacity(1);
+		cool_bugs.push(Bug{
+			is_red:true,
+			coolness:1337,
+		});
+
+		bugs.append(&mut cool_bugs);
+
+		assert_eq!(&[false,true], bugs.is_red_slice());
+		assert_eq!(&[1,1337], bugs.coolness_slice());
+	}
 }
