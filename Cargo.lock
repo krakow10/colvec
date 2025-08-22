@@ -137,22 +137,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "test-nightly_off-std_off"
-version = "0.1.0"
-
-[[package]]
-name = "test-nightly_off-std_on"
-version = "0.1.0"
-
-[[package]]
-name = "test-nightly_on-std_off"
-version = "0.1.0"
-
-[[package]]
-name = "test-nightly_on-std_on"
-version = "0.1.0"
-
-[[package]]
 name = "unicode-ident"
 version = "1.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
