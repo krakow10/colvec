@@ -61,6 +61,7 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 	let field_idents=fields.named.iter().map(|field|field.ident.as_ref().unwrap().clone());
 	let impls = quote! {
 		impl<A: ::colvec::alloc::Allocator> #colvec_ident<A>{
+			#[inline]
 			pub const fn capacity(&self) -> usize {
 				self.buf.capacity()
 			}
@@ -113,6 +114,7 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 	let field_access = quote! {
 		impl<A: ::colvec::alloc::Allocator> #colvec_ident<A>{
 			#(
+				#[inline]
 				pub const fn #field_slice_fn_idents(&self) -> &[#field_types] {
 					unsafe {
 						core::slice::from_raw_parts(
@@ -123,6 +125,7 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 						)
 					}
 				}
+				#[inline]
 				pub const fn #field_slice_mut_fn_idents(&mut self) -> &mut [#field_types] {
 					unsafe {
 						core::slice::from_raw_parts_mut(

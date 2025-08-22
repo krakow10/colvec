@@ -30,6 +30,7 @@ impl ::colvec::raw::StructInfo<4usize> for Test {
     ]);
 }
 impl<A: ::colvec::alloc::Allocator> TestColVec<A> {
+    #[inline]
     pub const fn capacity(&self) -> usize {
         self.buf.capacity()
     }
@@ -92,6 +93,7 @@ impl<A: ::colvec::alloc::Allocator> TestColVec<A> {
     }
 }
 impl<A: ::colvec::alloc::Allocator> TestColVec<A> {
+    #[inline]
     pub const fn field0_slice(&self) -> &[u8] {
         unsafe {
             core::slice::from_raw_parts(
@@ -107,6 +109,7 @@ impl<A: ::colvec::alloc::Allocator> TestColVec<A> {
             )
         }
     }
+    #[inline]
     pub const fn field0_slice_mut(&mut self) -> &mut [u8] {
         unsafe {
             core::slice::from_raw_parts_mut(
@@ -122,6 +125,7 @@ impl<A: ::colvec::alloc::Allocator> TestColVec<A> {
             )
         }
     }
+    #[inline]
     pub const fn field1_slice(&self) -> &[Option<u8>] {
         unsafe {
             core::slice::from_raw_parts(
@@ -137,6 +141,7 @@ impl<A: ::colvec::alloc::Allocator> TestColVec<A> {
             )
         }
     }
+    #[inline]
     pub const fn field1_slice_mut(&mut self) -> &mut [Option<u8>] {
         unsafe {
             core::slice::from_raw_parts_mut(
@@ -152,6 +157,7 @@ impl<A: ::colvec::alloc::Allocator> TestColVec<A> {
             )
         }
     }
+    #[inline]
     pub const fn field2_slice(&self) -> &[i16] {
         unsafe {
             core::slice::from_raw_parts(
@@ -167,6 +173,7 @@ impl<A: ::colvec::alloc::Allocator> TestColVec<A> {
             )
         }
     }
+    #[inline]
     pub const fn field2_slice_mut(&mut self) -> &mut [i16] {
         unsafe {
             core::slice::from_raw_parts_mut(
@@ -182,6 +189,7 @@ impl<A: ::colvec::alloc::Allocator> TestColVec<A> {
             )
         }
     }
+    #[inline]
     pub const fn field3_slice(&self) -> &[u32] {
         unsafe {
             core::slice::from_raw_parts(
@@ -197,6 +205,7 @@ impl<A: ::colvec::alloc::Allocator> TestColVec<A> {
             )
         }
     }
+    #[inline]
     pub const fn field3_slice_mut(&mut self) -> &mut [u32] {
         unsafe {
             core::slice::from_raw_parts_mut(
