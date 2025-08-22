@@ -25,12 +25,12 @@ enum AllocInit {
 	Zeroed,
 }
 
-pub struct RawColVec<const N:usize, T, A: Allocator> {
+pub struct RawColVec<const N:usize, T: StructInfo<N>, A: Allocator> {
 	inner: RawColVecInner<N, A>,
 	_marker: PhantomData<T>,
 }
-unsafe impl<const N:usize, T: Send, A: Allocator> Send for RawColVec<N, T, A> {}
-unsafe impl<const N:usize, T: Sync, A: Allocator> Sync for RawColVec<N, T, A> {}
+unsafe impl<const N:usize, T: Send + StructInfo<N>, A: Allocator> Send for RawColVec<N, T, A> {}
+unsafe impl<const N:usize, T: Sync + StructInfo<N>, A: Allocator> Sync for RawColVec<N, T, A> {}
 
 struct RawColVecInner<const N:usize, A: Allocator> {
 	ptr: NonNull<u8>,
@@ -122,6 +122,14 @@ impl<const N:usize, T: StructInfo<N>, A: Allocator> RawColVec<N, T, A> {
 	#[track_caller]
 	pub fn grow_one(&mut self) {
 		self.inner.grow_one(T::LAYOUT,&T::FIELDS)
+	}
+}
+
+impl<const N:usize, T: StructInfo<N>, A: Allocator> Drop for RawColVec<N, T, A> {
+	/// Frees the memory owned by the `RawVec` *without* trying to drop its contents.
+	fn drop(&mut self) {
+		// SAFETY: We are in a Drop impl, self.inner will not be used again.
+		unsafe { self.inner.deallocate(T::LAYOUT) }
 	}
 }
 
@@ -293,6 +301,20 @@ impl<const N:usize, A: Allocator> RawColVecInner<N, A> {
 
 		unsafe { self.set_ptr_and_cap(ptr, cap) };
 		Ok(())
+	}
+	/// # Safety
+	///
+	/// This function deallocates the owned allocation, but does not update `ptr` or `cap` to
+	/// prevent double-free or use-after-free. Essentially, do not do anything with the caller
+	/// after this function returns.
+	/// Ideally this function would take `self` by move, but it cannot because it exists to be
+	/// called from a `Drop` impl.
+	unsafe fn deallocate(&mut self, elem_layout: Layout) {
+		if let Some((ptr, layout)) = self.current_memory(elem_layout) {
+			unsafe {
+				self.alloc.deallocate(ptr, layout);
+			}
+		}
 	}
 }
 
