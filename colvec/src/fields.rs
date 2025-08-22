@@ -60,7 +60,13 @@ impl<const N:usize> Fields<N>{
 	pub const fn offset_of(&self,index:usize)->usize{
 		self.field_id_to_offset[index]
 	}
-	pub const unsafe fn move_fields(
+	// SAFETY:
+	// ptr must be aligned
+	// old_capacity must be a multiple of <T as StructInfo>::LAYOUT.align()
+	// new_capacity must be a multiple of <T as StructInfo>::LAYOUT.align()
+	// len must not exceed new_capacity
+	// len must not exceed old_capacity
+	pub const unsafe fn grow_fields(
 		&self,
 		ptr: *mut u8,
 		old_capacity: usize,

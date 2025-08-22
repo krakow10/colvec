@@ -295,7 +295,7 @@ where
 			return Err(AllocError { layout: new_layout }.into());
 		};
 
-		unsafe{ fields.move_fields(ptr.as_ptr(), old_capacity, new_capacity, len) }
+		unsafe{ fields.grow_fields(ptr.as_ptr(), old_capacity, new_capacity, len) }
 
 		Ok(region)
 	} else {
