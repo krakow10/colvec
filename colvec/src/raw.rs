@@ -50,25 +50,10 @@ impl<const N:usize, T: StructInfo<N>> RawColVec<N, T, Global> {
 	pub const fn new() -> Self {
 		Self::new_in(Global)
 	}
-	// #[must_use]
-	// #[inline]
-	// #[track_caller]
-	// pub(crate) fn with_capacity(capacity: usize) -> Self {
-	// 	Self { inner: TestRawColVecInner::with_capacity(capacity, Layout::new::<Test>()) }
-	// }
 }
 
 
 impl<const N:usize> RawColVecInner<N, Global> {
-	// #[must_use]
-	// #[inline]
-	// #[track_caller]
-	// fn with_capacity(capacity: usize, elem_layout: Layout) -> Self {
-	//     match Self::try_allocate_in(capacity, AllocInit::Uninitialized, Global, elem_layout) {
-	//         Ok(res) => res,
-	//         Err(err) => handle_error(err),
-	//     }
-	// }
 }
 
 // Tiny Vecs are dumb. Skip to:
