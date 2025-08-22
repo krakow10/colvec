@@ -5,7 +5,7 @@ use core::marker::PhantomData;
 use core::num::NonZero;
 use core::ptr::NonNull;
 
-use crate::alloc::{Allocator,Global};
+use crate::alloc::Allocator;
 use crate::error::TryReserveError;
 use crate::error::TryReserveErrorKind::*;
 use crate::fields::Fields;
@@ -42,18 +42,6 @@ struct RawColVecInner<A: Allocator> {
 pub trait StructInfo<const N:usize> {
 	const LAYOUT:Layout;
 	const FIELDS:Fields::<N>;
-}
-
-impl<const N:usize, T: StructInfo<N>> RawColVec<N, T, Global> {
-	#[inline]
-	#[must_use]
-	pub const fn new() -> Self {
-		Self::new_in(Global)
-	}
-}
-
-
-impl RawColVecInner<Global> {
 }
 
 // Tiny Vecs are dumb. Skip to:

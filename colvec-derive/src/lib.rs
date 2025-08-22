@@ -36,7 +36,7 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 			#[inline]
 			#[must_use]
 			pub const fn new() -> Self {
-				Self { buf: ::colvec::raw::RawColVec::new(), len: 0 }
+				Self { buf: ::colvec::raw::RawColVec::new_in(::colvec::alloc::Global), len: 0 }
 			}
 			#[inline]
 			#[must_use]
