@@ -1,6 +1,6 @@
 [workspace]
 members = [
 	"colvec",
-	"colvec-derive",
+	"colvec-derive", "tests/test-nightly_off-std_off", "tests/test-nightly_off-std_on", "tests/test-nightly_on-std_off", "tests/test-nightly_on-std_on",
 ]
 resolver = "2"
