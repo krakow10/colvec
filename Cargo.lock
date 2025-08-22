@@ -21,7 +21,6 @@ dependencies = [
 name = "colvec-derive"
 version = "0.0.1"
 dependencies = [
- "allocator-api2",
  "insta",
  "prettyplease",
  "proc-macro2",
