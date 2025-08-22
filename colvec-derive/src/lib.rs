@@ -197,15 +197,19 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 		}
 	};
 
-	quote! {
+	let mut output=quote! {
 		#colvec
-		#global
 
 		#struct_info
 
 		#impls
 		#field_access
-	}.into()
+	};
+
+	#[cfg(feature = "std")]
+	output.extend(global);
+
+	output.into()
 }
 
 #[cfg(test)]
