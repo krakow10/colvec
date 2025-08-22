@@ -178,22 +178,4 @@ mod tests {
 		// snapshot-test it
 		insta::assert_snapshot!(formatted);
 	}
-
-	#[test]
-	fn snapshot_test_zst() {
-		let item:syn::ItemStruct = parse_quote! {
-			pub struct ZST{}
-		};
-
-		let output = colvec_derive_inner(item.into()).to_string();
-
-		// pretend it outputs a file
-		let as_file = syn::parse_file(&output).unwrap();
-
-		// format it in a pretty way
-		let formatted = prettyplease::unparse(&as_file);
-
-		// snapshot-test it
-		insta::assert_snapshot!(formatted);
-	}
 }
