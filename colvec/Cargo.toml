@@ -14,7 +14,10 @@ colvec-derive = { version = "0.0.2", path = "../colvec-derive" }
 compile_time_sort = "1.1.4"
 
 [features]
-default = ["std"]
+default = ["std","allocator-api2"]
 # does this implicitly enable allocator-api2 dependency?
-std = ["allocator-api2/std","colvec-derive/std"]
+std = ["allocator-api2?/std","colvec-derive/std"]
+
+# mutually exclusive
 nightly = []
+allocator-api2 = ["dep:allocator-api2"]
