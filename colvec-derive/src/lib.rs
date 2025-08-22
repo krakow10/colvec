@@ -153,8 +153,8 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use syn::parse_quote;
+	use super::*;
+	use syn::parse_quote;
 
 	#[test]
 	fn snapshot_test1() {
@@ -170,12 +170,12 @@ mod tests {
 		let output = colvec_derive_inner(test1.into());
 
 		// pretend it outputs a file
-        let as_file = syn::parse_file(&output.to_string()).unwrap();
+		let as_file = syn::parse_file(&output.to_string()).unwrap();
 
 		// format it in a pretty way
-        let formatted = prettyplease::unparse(&as_file);
+		let formatted = prettyplease::unparse(&as_file);
 
-        // snapshot-test it
-        insta::assert_snapshot!(formatted);
+		// snapshot-test it
+		insta::assert_snapshot!(formatted);
 	}
 }

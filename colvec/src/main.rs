@@ -2,7 +2,7 @@ fn main(){}
 
 #[cfg(test)]
 mod tests {
-    use ::colvec::*;
+	use ::colvec::*;
 
 	#[test]
 	fn smoke_test_macro() {
