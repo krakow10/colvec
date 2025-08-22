@@ -80,6 +80,10 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 			pub const fn capacity(&self) -> usize {
 				self.buf.capacity()
 			}
+			#[track_caller]
+			pub fn reserve(&mut self, additional: usize) {
+				self.buf.reserve(self.len, additional);
+			}
 			#[inline]
 			const fn as_ptr(&self) -> *const u8 {
 				// We shadow the slice method of the same name to avoid going through
@@ -91,6 +95,12 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 				// We shadow the slice method of the same name to avoid going through
 				// `deref_mut`, which creates an intermediate reference.
 				self.buf.ptr()
+			}
+			#[inline]
+			pub unsafe fn set_len(&mut self, new_len: usize) {
+				debug_assert!(new_len <= self.capacity());
+
+				self.len = new_len;
 			}
 			pub fn push(&mut self, value: #ident){
 				// Inform codegen that the length does not change across grow_one().
@@ -110,6 +120,34 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 					)*
 				}
 				self.len = len + 1;
+			}
+			#[inline]
+			#[track_caller]
+			pub fn append(&mut self, other: &mut Self) {
+				unsafe {
+					self.append_elements(other);
+					other.set_len(0);
+				}
+			}
+
+			/// Appends elements to `self` from other buffer.
+			#[inline]
+			#[track_caller]
+			unsafe fn append_elements(&mut self, other: &Self) {
+				let count = other.len();
+				self.reserve(count);
+				let len = self.len();
+				unsafe {
+					<#ident as ::colvec::raw::StructInfo<#fields_count>>::FIELDS.move_fields(
+						other.as_ptr(),
+						self.as_mut_ptr(),
+						other.capacity(),
+						self.capacity(),
+						len,
+						count,
+					)
+				}
+				self.len += count;
 			}
 		   #[inline]
 			pub const fn len(&self) -> usize {

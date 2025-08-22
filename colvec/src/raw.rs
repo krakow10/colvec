@@ -106,6 +106,11 @@ impl<const N:usize, T: StructInfo<N>, A: Allocator> RawColVec<N, T, A> {
 	pub const fn capacity(&self) -> usize {
 		self.inner.capacity(T::LAYOUT.size())
 	}
+	#[inline]
+	#[track_caller]
+	pub fn reserve(&mut self, len: usize, additional: usize) {
+		self.inner.reserve(len, additional, T::LAYOUT, &T::FIELDS)
+	}
 	/// Gets a raw pointer to the start of the allocation. Note that this is
 	/// `Unique::dangling()` if `capacity == 0` or `T` is zero-sized. In the former case, you must
 	/// be careful.
@@ -186,6 +191,30 @@ impl<const N:usize, A: Allocator> RawColVecInner<N, A> {
 	#[inline]
 	const fn capacity(&self, elem_size: usize) -> usize {
 		if elem_size == 0 { usize::MAX } else { self.cap }
+	}
+	#[inline]
+	#[track_caller]
+	fn reserve(&mut self, len: usize, additional: usize, elem_layout: Layout, fields: &Fields<N>) {
+		// Callers expect this function to be very cheap when there is already sufficient capacity.
+		// Therefore, we move all the resizing and error-handling logic from grow_amortized and
+		// handle_reserve behind a call, while making sure that this function is likely to be
+		// inlined as just a comparison and a call if the comparison fails.
+		#[cold]
+		fn do_reserve_and_handle<const N:usize, A: Allocator>(
+			slf: &mut RawColVecInner<N, A>,
+			len: usize,
+			additional: usize,
+			elem_layout: Layout,
+			fields: &Fields<N>,
+		) {
+			if let Err(err) = slf.grow_amortized(len, additional, elem_layout, fields) {
+				handle_error(err);
+			}
+		}
+
+		if self.needs_to_grow(len, additional, elem_layout) {
+			do_reserve_and_handle(self, len, additional, elem_layout, fields);
+		}
 	}
 	#[inline]
 	#[track_caller]
