@@ -147,6 +147,8 @@ impl<const N:usize, A: Allocator> RawColVecInner<N, A> {
 		alloc: A,
 		elem_layout: Layout,
 	) -> Result<Self, TryReserveError> {
+		// capacity must be a multiple of alignment
+		let capacity = capacity.next_multiple_of(elem_layout.align());
 		// We avoid `unwrap_or_else` here because it bloats the amount of
 		// LLVM IR generated.
 		let layout = match layout_colvec(capacity, elem_layout) {
