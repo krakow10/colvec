@@ -1,5 +1,13 @@
 fn main(){}
 
+// Idea: multi-slice like Vec<T> Derefs to &[T]
+// RawColVec Derefs to &RawColSlice
+// &RawColSlice has .field1_slice
+// RawColVec DerefMuts to &mut RawColSlice
+// &mut RawColSlice has .field1_slice_mut
+//
+// RawColSlice is a ZST but is !Sized to get the fat pointer
+
 #[cfg(test)]
 mod tests {
 	use ::colvec::*;
