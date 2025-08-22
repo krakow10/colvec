@@ -1,6 +1,6 @@
 [package]
 name = "colvec"
-version = "0.0.1"
+version = "0.0.2"
 edition = "2024"
 repository = "https://github.com/krakow10/colvec"
 license = "MIT OR Apache-2.0"
@@ -10,5 +10,5 @@ keywords = ["struct", "arrays", "vec", "allocator-api2"]
 
 [dependencies]
 allocator-api2 = "0.3.0"
-colvec-derive = { version = "0.0.1", path = "../colvec-derive" }
+colvec-derive = { version = "0.0.2", path = "../colvec-derive" }
 compile_time_sort = "1.1.4"
