@@ -6,22 +6,6 @@ pub struct TestColVec<A: ::colvec::alloc::Allocator = ::colvec::alloc::Global> {
     buf: ::colvec::raw::RawColVec<4usize, Test, A>,
     len: usize,
 }
-impl TestColVec<::colvec::alloc::Global> {
-    #[inline]
-    #[must_use]
-    pub const fn new() -> Self {
-        Self {
-            buf: ::colvec::raw::RawColVec::new_in(::colvec::alloc::Global),
-            len: 0,
-        }
-    }
-    #[inline]
-    #[must_use]
-    #[track_caller]
-    pub fn with_capacity(capacity: usize) -> Self {
-        Self::with_capacity_in(capacity, ::colvec::alloc::Global)
-    }
-}
 impl ::colvec::raw::StructInfo<4usize> for Test {
     const LAYOUT: ::core::alloc::Layout = unsafe {
         let size = Self::FIELDS.size();
@@ -282,5 +266,21 @@ impl<A: ::colvec::alloc::Allocator> TestColVec<A> {
                 self.len,
             )
         }
+    }
+}
+impl TestColVec<::colvec::alloc::Global> {
+    #[inline]
+    #[must_use]
+    pub const fn new() -> Self {
+        Self {
+            buf: ::colvec::raw::RawColVec::new_in(::colvec::alloc::Global),
+            len: 0,
+        }
+    }
+    #[inline]
+    #[must_use]
+    #[track_caller]
+    pub fn with_capacity(capacity: usize) -> Self {
+        Self::with_capacity_in(capacity, ::colvec::alloc::Global)
     }
 }

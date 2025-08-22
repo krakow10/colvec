@@ -24,13 +24,24 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 	let colvec_ident=syn::Ident::new(&colvec_ident_string,ident.span());
 
 	let fields_count=fields.named.len();
-	let colvec = quote!{
-		#vis struct #colvec_ident<A: ::colvec::alloc::Allocator = ::colvec::alloc::Global>{
+	let mut colvec: syn::ItemStruct = syn::parse_quote!{
+		#vis struct #colvec_ident<A: ::colvec::alloc::Allocator>{
 			buf: ::colvec::raw::RawColVec<#fields_count, #ident, A>,
 			len: usize,
 		}
 	};
 
+	#[cfg(feature = "std")]
+	match colvec.generics.params.first_mut(){
+		Some(syn::GenericParam::Type(type_param))=>{
+			type_param.eq_token=Some(syn::Token![=](type_param.ident.span()));
+			type_param.default=Some(syn::parse_quote!{::colvec::alloc::Global});
+		},
+		// colvec expression always contains type param
+		_ => unreachable!(),
+	}
+
+	#[cfg(feature = "std")]
 	let global = quote! {
 		impl #colvec_ident<::colvec::alloc::Global>{
 			#[inline]
@@ -197,15 +208,19 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 		}
 	};
 
-	quote! {
+	let mut output=quote! {
 		#colvec
-		#global
 
 		#struct_info
 
 		#impls
 		#field_access
-	}.into()
+	};
+
+	#[cfg(feature = "std")]
+	output.extend(global);
+
+	output.into()
 }
 
 #[cfg(test)]
