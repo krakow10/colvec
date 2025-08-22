@@ -26,13 +26,13 @@ enum AllocInit {
 }
 
 pub struct RawColVec<const N:usize, T: StructInfo<N>, A: Allocator> {
-	inner: RawColVecInner<N, A>,
+	inner: RawColVecInner<A>,
 	_marker: PhantomData<T>,
 }
 unsafe impl<const N:usize, T: Send + StructInfo<N>, A: Allocator> Send for RawColVec<N, T, A> {}
 unsafe impl<const N:usize, T: Sync + StructInfo<N>, A: Allocator> Sync for RawColVec<N, T, A> {}
 
-struct RawColVecInner<const N:usize, A: Allocator> {
+struct RawColVecInner<A: Allocator> {
 	ptr: NonNull<u8>,
 	cap: usize,
 	alloc: A,
@@ -53,7 +53,7 @@ impl<const N:usize, T: StructInfo<N>> RawColVec<N, T, Global> {
 }
 
 
-impl<const N:usize> RawColVecInner<N, Global> {
+impl RawColVecInner<Global> {
 }
 
 // Tiny Vecs are dumb. Skip to:
@@ -118,7 +118,7 @@ impl<const N:usize, T: StructInfo<N>, A: Allocator> Drop for RawColVec<N, T, A> 
 	}
 }
 
-impl<const N:usize, A: Allocator> RawColVecInner<N, A> {
+impl<A: Allocator> RawColVecInner<A> {
 	#[inline]
 	const fn new_in(alloc: A, align: NonZero<usize>) -> Self {
 		let ptr = NonNull::without_provenance(align);
@@ -187,14 +187,14 @@ impl<const N:usize, A: Allocator> RawColVecInner<N, A> {
 	}
 	#[inline]
 	#[track_caller]
-	fn reserve(&mut self, len: usize, additional: usize, elem_layout: Layout, fields: &Fields<N>) {
+	fn reserve<const N:usize>(&mut self, len: usize, additional: usize, elem_layout: Layout, fields: &Fields<N>) {
 		// Callers expect this function to be very cheap when there is already sufficient capacity.
 		// Therefore, we move all the resizing and error-handling logic from grow_amortized and
 		// handle_reserve behind a call, while making sure that this function is likely to be
 		// inlined as just a comparison and a call if the comparison fails.
 		#[cold]
 		fn do_reserve_and_handle<const N:usize, A: Allocator>(
-			slf: &mut RawColVecInner<N, A>,
+			slf: &mut RawColVecInner<A>,
 			len: usize,
 			additional: usize,
 			elem_layout: Layout,
@@ -211,7 +211,7 @@ impl<const N:usize, A: Allocator> RawColVecInner<N, A> {
 	}
 	#[inline]
 	#[track_caller]
-	fn grow_one(&mut self, elem_layout: Layout, fields: &Fields<N>) {
+	fn grow_one<const N:usize>(&mut self, elem_layout: Layout, fields: &Fields<N>) {
 		if let Err(err) = self.grow_amortized(self.cap, 1, elem_layout, fields) {
 			handle_error(err);
 		}
@@ -244,7 +244,7 @@ impl<const N:usize, A: Allocator> RawColVecInner<N, A> {
 		self.ptr = ptr.cast();
 		self.cap = cap;
 	}
-	fn grow_amortized(
+	fn grow_amortized<const N:usize>(
 		&mut self,
 		len: usize,
 		additional: usize,
