@@ -18,12 +18,12 @@ fn capacity_overflow() -> ! {
 	panic!("capacity overflow");
 }
 
-pub struct RawColVec<const N:usize, T, A: Allocator = Global> {
+pub struct RawColVec<const N:usize, T, A: Allocator> {
 	inner: RawColVecInner<N, A>,
 	_marker: PhantomData<T>,
 }
 
-struct RawColVecInner<const N:usize, A: Allocator = Global> {
+struct RawColVecInner<const N:usize, A: Allocator> {
 	ptr: NonNull<u8>,
 	cap: usize,
 	alloc: A,
