@@ -14,14 +14,18 @@ mod tests {
 
 		let mut test=TestColVec::new();
 		test.push(Test{
-			field0:1,
+			field0:255,
 			field1:-1,
+		});
+		test.push(Test{
+			field0:1,
+			field1:-2,
 		});
 
 		test.field0_slice_mut().sort();
 		test.field1_slice_mut().sort();
 
-		assert_eq!( 1, test.field0_slice()[0]);
-		assert_eq!(-1, test.field1_slice()[0]);
+		assert_eq!(&[1,255], test.field0_slice());
+		assert_eq!(&[-2,-1], test.field1_slice());
 	}
 }
