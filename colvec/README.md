@@ -10,32 +10,34 @@ Column Vec
 
 ## Example
 ```rust
-#[derive(colvec::ColVec)]
-struct Test{
+use colvec::ColVec;
+
+#[derive(ColVec)]
+struct Example{
 	field1:u8,
 	field2:Option<u8>,
 	field3:i16,
 	field4:u32,
 }
 
-let mut col=TestColVec::new();
-col.push(Test{
+let mut cols=ExampleColVec::new();
+cols.push(Example{
 	field1:1,
 	field2:Some(2),
 	field3:3,
 	field4:4,
 });
-col.push(Test{
+cols.push(Example{
 	field1:5,
 	field2:Some(6),
 	field3:7,
 	field4:8,
 });
 
-assert_eq!(&[1,5], col.field1_slice());
-assert_eq!(&[Some(2),Some(6)], col.field2_slice());
-assert_eq!(&[3,7], col.field3_slice());
-assert_eq!(&[4,8], col.field4_slice());
+assert_eq!(&[1,5], cols.field1_slice());
+assert_eq!(&[Some(2),Some(6)], cols.field2_slice());
+assert_eq!(&[3,7], cols.field3_slice());
+assert_eq!(&[4,8], cols.field4_slice());
 ```
 
 #### License
