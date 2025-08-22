@@ -91,6 +91,10 @@ impl<A: ::colvec::alloc::Allocator> TestColVec<A> {
         }
         self.len = len + 1;
     }
+    #[inline]
+    pub const fn len(&self) -> usize {
+        self.len
+    }
 }
 impl<A: ::colvec::alloc::Allocator> TestColVec<A> {
     #[inline]

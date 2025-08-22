@@ -96,6 +96,10 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 				}
 				self.len = len + 1;
 			}
+		   #[inline]
+			pub const fn len(&self) -> usize {
+				self.len
+			}
 		}
 	};
 

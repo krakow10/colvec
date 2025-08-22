@@ -38,6 +38,6 @@ mod tests {
 		test.push(ZST{});
 		test.push(ZST{});
 
-		// assert_eq!(2, test.len());
+		assert_eq!(2, test.len());
 	}
 }
