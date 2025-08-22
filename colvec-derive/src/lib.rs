@@ -38,6 +38,12 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 			pub const fn new() -> Self {
 				Self { buf: ::colvec::raw::RawColVec::new(), len: 0 }
 			}
+			#[inline]
+			#[must_use]
+			#[track_caller]
+			pub fn with_capacity(capacity: usize) -> Self {
+				Self::with_capacity_in(capacity, ::colvec::alloc::Global)
+			}
 		}
 	};
 
@@ -64,6 +70,11 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 			#[inline]
 			pub const fn new_in(alloc: A) -> Self {
 				Self { buf: ::colvec::raw::RawColVec::new_in(alloc), len: 0 }
+			}
+			#[inline]
+			#[track_caller]
+			pub fn with_capacity_in(capacity: usize, alloc: A) -> Self {
+				Self { buf: ::colvec::raw::RawColVec::with_capacity_in(capacity, alloc), len: 0 }
 			}
 			#[inline]
 			pub const fn capacity(&self) -> usize {

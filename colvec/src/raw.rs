@@ -18,6 +18,13 @@ fn capacity_overflow() -> ! {
 	panic!("capacity overflow");
 }
 
+enum AllocInit {
+	/// The contents of the new memory are uninitialized.
+	Uninitialized,
+	/// The new memory is guaranteed to be zeroed.
+	Zeroed,
+}
+
 pub struct RawColVec<const N:usize, T, A: Allocator> {
 	inner: RawColVecInner<N, A>,
 	_marker: PhantomData<T>,
@@ -85,13 +92,14 @@ impl<const N:usize, T: StructInfo<N>, A: Allocator> RawColVec<N, T, A> {
 			_marker: PhantomData,
 		}
 	}
-	// #[inline]
-	// #[track_caller]
-	// pub fn with_capacity_in(capacity: usize, alloc: A) -> Self {
-	//     Self {
-	//         inner: RawVecInner::with_capacity_in(capacity, alloc, Layout::new::<Test>()),
-	//     }
-	// }
+	#[inline]
+	#[track_caller]
+	pub fn with_capacity_in(capacity: usize, alloc: A) -> Self {
+		Self {
+			inner: RawColVecInner::with_capacity_in(capacity, alloc, T::LAYOUT),
+			_marker: PhantomData,
+		}
+	}
 	#[inline]
 	pub const fn capacity(&self) -> usize {
 		self.inner.capacity(T::LAYOUT.size())
@@ -118,6 +126,60 @@ impl<const N:usize, A: Allocator> RawColVecInner<N, A> {
 		Self { ptr, cap: 0, alloc }
 	}
 	#[inline]
+	#[track_caller]
+	fn with_capacity_in(capacity: usize, alloc: A, elem_layout: Layout) -> Self {
+		match Self::try_allocate_in(capacity, AllocInit::Uninitialized, alloc, elem_layout) {
+			Ok(this) => {
+				unsafe {
+					// Make it more obvious that a subsequent Vec::reserve(capacity) will not allocate.
+					hint::assert_unchecked(!this.needs_to_grow(0, capacity, elem_layout));
+				}
+				this
+			}
+			Err(err) => handle_error(err),
+		}
+	}
+	fn try_allocate_in(
+		capacity: usize,
+		init: AllocInit,
+		alloc: A,
+		elem_layout: Layout,
+	) -> Result<Self, TryReserveError> {
+		// We avoid `unwrap_or_else` here because it bloats the amount of
+		// LLVM IR generated.
+		let layout = match layout_colvec(capacity, elem_layout) {
+			Ok(layout) => layout,
+			Err(_) => return Err(CapacityOverflow.into()),
+		};
+
+		// Don't allocate here because `Drop` will not deallocate when `capacity` is 0.
+		if layout.size() == 0 {
+			return Ok(Self::new_in(alloc, unsafe{NonZero::new_unchecked(elem_layout.align())}));
+		}
+
+		if let Err(err) = alloc_guard(layout.size()) {
+			return Err(err);
+		}
+
+		let result = match init {
+			AllocInit::Uninitialized => alloc.allocate(layout),
+			AllocInit::Zeroed => alloc.allocate_zeroed(layout),
+		};
+		let ptr = match result {
+			Ok(ptr) => ptr,
+			Err(_) => return Err(AllocError { layout }.into()),
+		};
+
+		// Allocators currently return a `NonNull<[u8]>` whose length
+		// matches the size requested. If that ever changes, the capacity
+		// here should change to `ptr.len() / size_of::<T>()`.
+		Ok(Self {
+			ptr: ptr.cast(),
+			cap: capacity,
+			alloc,
+		})
+	}
+	#[inline]
 	const fn capacity(&self, elem_size: usize) -> usize {
 		if elem_size == 0 { usize::MAX } else { self.cap }
 	}
@@ -127,6 +189,10 @@ impl<const N:usize, A: Allocator> RawColVecInner<N, A> {
 		if let Err(err) = self.grow_amortized(self.cap, 1, elem_layout, fields) {
 			handle_error(err);
 		}
+	}
+	#[inline]
+	fn needs_to_grow(&self, len: usize, additional: usize, elem_layout: Layout) -> bool {
+		additional > self.capacity(elem_layout.size()).wrapping_sub(len)
 	}
 	#[inline]
 	fn current_memory(&self, elem_layout: Layout) -> Option<(NonNull<u8>, Layout)> {
