@@ -31,6 +31,13 @@ impl ::colvec::raw::StructInfo<4usize> for Test {
 }
 impl<A: ::colvec::alloc::Allocator> TestColVec<A> {
     #[inline]
+    pub const fn new_in(alloc: A) -> Self {
+        Self {
+            buf: ::colvec::raw::RawColVec::new_in(alloc),
+            len: 0,
+        }
+    }
+    #[inline]
     pub const fn capacity(&self) -> usize {
         self.buf.capacity()
     }

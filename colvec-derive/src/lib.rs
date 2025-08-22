@@ -62,6 +62,10 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 	let impls = quote! {
 		impl<A: ::colvec::alloc::Allocator> #colvec_ident<A>{
 			#[inline]
+			pub const fn new_in(alloc: A) -> Self {
+				Self { buf: ::colvec::raw::RawColVec::new_in(alloc), len: 0 }
+			}
+			#[inline]
 			pub const fn capacity(&self) -> usize {
 				self.buf.capacity()
 			}
