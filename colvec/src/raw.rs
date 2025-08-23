@@ -80,6 +80,14 @@ impl<const N:usize, T: StructInfo<N>, A: Allocator> RawColVec<N, T, A> {
 		}
 	}
 	#[inline]
+	#[track_caller]
+	pub fn with_capacity_zeroed_in(capacity: usize, alloc: A) -> Self {
+		Self {
+			inner: RawColVecInner::with_capacity_zeroed_in(capacity, alloc, T::LAYOUT),
+			_marker: PhantomData,
+		}
+	}
+	#[inline]
 	pub unsafe fn from_raw_parts_in(ptr: *mut u8, capacity: usize, alloc: A) -> Self {
 		// SAFETY: Precondition passed to the caller
 		unsafe {
@@ -138,6 +146,14 @@ impl<A: Allocator> RawColVecInner<A> {
 				}
 				this
 			}
+			Err(err) => handle_error(err),
+		}
+	}
+	#[inline]
+	#[track_caller]
+	fn with_capacity_zeroed_in(capacity: usize, alloc: A, elem_layout: Layout) -> Self {
+		match Self::try_allocate_in(capacity, AllocInit::Zeroed, alloc, elem_layout) {
+			Ok(res) => res,
 			Err(err) => handle_error(err),
 		}
 	}
