@@ -10,6 +10,8 @@ use crate::error::TryReserveError;
 use crate::error::TryReserveErrorKind::*;
 use crate::fields::Fields;
 
+use crate::alloc::handle_alloc_error;
+
 // One central function responsible for reporting capacity overflows. This'll
 // ensure that the code generation related to these panics is minimal as there's
 // only one location which panics rather than a bunch throughout the module.
@@ -333,7 +335,7 @@ where
 fn handle_error(e: TryReserveError) -> ! {
 	match e.kind() {
 		CapacityOverflow => capacity_overflow(),
-		AllocError { layout, .. } => allocator_api2::alloc::handle_alloc_error(layout),
+		AllocError { layout, .. } => handle_alloc_error(layout),
 	}
 }
 
