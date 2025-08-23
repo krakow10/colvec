@@ -15,7 +15,6 @@ compile_time_sort = "1.1.4"
 
 [features]
 default = ["std","allocator-api2"]
-# does this implicitly enable allocator-api2 dependency?
 std = ["allocator-api2?/std","colvec-derive/std"]
 
 # mutually exclusive
