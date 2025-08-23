@@ -4,3 +4,5 @@ members = [
 	"colvec-derive",
 ]
 resolver = "2"
+package.version = "0.0.2"
+dependencies.colvec-derive = { version = "0.0.2", path = "colvec-derive", default-features = false }
