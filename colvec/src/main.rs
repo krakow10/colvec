@@ -15,6 +15,36 @@ fn main(){}
 mod tests {
 	use ::colvec::*;
 
+	#[cfg(not(feature = "std"))]
+	mod global {
+		extern crate alloc as core_alloc;
+		use core_alloc::alloc::{alloc, dealloc, Layout};
+		use core::ptr::NonNull;
+
+		use ::colvec::alloc::{Allocator,AllocError};
+
+		#[derive(Copy, Clone)]
+		pub struct Global;
+
+		unsafe impl Allocator for Global {
+			#[inline]
+			fn allocate(&self, layout: Layout) -> Result<NonNull<[u8]>, AllocError> {
+				let non_null=NonNull::new(unsafe{alloc(layout)}).ok_or(AllocError)?;
+				Ok(NonNull::slice_from_raw_parts(non_null, layout.size()))
+			}
+			#[inline]
+			unsafe fn deallocate(&self, ptr: NonNull<u8>, layout: Layout) {
+				unsafe {dealloc(ptr.as_ptr(), layout) }
+			}
+		}
+		impl Default for Global {
+			#[inline]
+			fn default() -> Self {
+				Global
+			}
+		}
+	}
+
 	#[test]
 	fn smoke_test_macro() {
 		#[derive(ColVec)]
@@ -23,7 +53,11 @@ mod tests {
 			field1:i32,
 		}
 
+		#[cfg(feature = "std")]
 		let mut test=TestColVec::new();
+		#[cfg(not(feature = "std"))]
+		let mut test=TestColVec::new_in(global::Global);
+
 		test.push(Test{
 			field0:255,
 			field1:-1,
@@ -45,7 +79,11 @@ mod tests {
 		#[derive(ColVec)]
 		struct ZST{}
 
+		#[cfg(feature = "std")]
 		let mut test=ZSTColVec::new();
+		#[cfg(not(feature = "std"))]
+		let mut test=ZSTColVec::new_in(global::Global);
+
 		test.push(ZST{});
 		test.push(ZST{});
 
@@ -60,13 +98,19 @@ mod tests {
 			coolness:u64,
 		}
 
+		#[cfg(feature = "std")]
 		let mut bugs=BugColVec::with_capacity(2);
+		#[cfg(not(feature = "std"))]
+		let mut bugs=BugColVec::with_capacity_in(2,global::Global);
 		bugs.push(Bug{
 			is_red:false,
 			coolness:1,
 		});
 
+		#[cfg(feature = "std")]
 		let mut cool_bugs=BugColVec::with_capacity(1);
+		#[cfg(not(feature = "std"))]
+		let mut cool_bugs=BugColVec::with_capacity_in(1,global::Global);
 		cool_bugs.push(Bug{
 			is_red:true,
 			coolness:1337,
