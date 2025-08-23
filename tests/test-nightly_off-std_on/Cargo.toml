@@ -4,6 +4,12 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-colvec = { features = ["allocator-api2","std"], path = "../../colvec", default-features = false }
+colvec = { path = "../../colvec", default-features = false }
+
+[features]
+default = ["allocator-api2","std"]
+std = ["colvec/std"]
+nightly = ["colvec/nightly"]
+allocator-api2 = ["colvec/allocator-api2"]
 
 [workspace]

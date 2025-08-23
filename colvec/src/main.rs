@@ -1,3 +1,6 @@
+#![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(feature = "nightly", feature(allocator_api))]
+
 fn main(){}
 
 // Idea: multi-slice like Vec<T> Derefs to &[T]
