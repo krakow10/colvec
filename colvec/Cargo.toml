@@ -10,7 +10,7 @@ keywords = ["struct", "arrays", "vec", "no_std"]
 
 [dependencies]
 allocator-api2 = { version = "0.3.0", default-features = false, optional = true }
-colvec-derive = { version = "0.0.2", path = "../colvec-derive" }
+colvec-derive = { version = "0.0.2", path = "../colvec-derive", default-features = false }
 compile_time_sort = "1.1.4"
 
 [features]

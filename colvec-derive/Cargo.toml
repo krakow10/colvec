@@ -15,6 +15,7 @@ quote = "1.0.40"
 syn = { version = "2.0.106", features = ["full"] }
 
 [features]
+default = ["std"]
 std = []
 
 [dev-dependencies]
