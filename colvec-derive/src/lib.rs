@@ -95,6 +95,20 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 			pub unsafe fn from_raw_parts_in(ptr: *mut u8, length: usize, capacity: usize, alloc: A) -> Self {
 				unsafe { Self { buf: ::colvec::raw::RawColVec::from_raw_parts_in(ptr, capacity, alloc), len: length } }
 			}
+			#[must_use = "losing the pointer will leak memory"]
+			pub fn into_raw_parts(self) -> (*mut u8, usize, usize) {
+				let mut me = ::core::mem::ManuallyDrop::new(self);
+				(me.as_mut_ptr(), me.len(), me.capacity())
+			}
+			#[must_use = "losing the pointer will leak memory"]
+			pub fn into_raw_parts_with_alloc(self) -> (*mut u8, usize, usize, A) {
+				let mut me = ::core::mem::ManuallyDrop::new(self);
+				let len = me.len();
+				let capacity = me.capacity();
+				let ptr = me.as_mut_ptr();
+				let alloc = unsafe { ::core::ptr::read(me.allocator()) };
+				(ptr, len, capacity, alloc)
+			}
 			#[inline]
 			pub const fn capacity(&self) -> usize {
 				self.buf.capacity()
@@ -114,6 +128,10 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 				// We shadow the slice method of the same name to avoid going through
 				// `deref_mut`, which creates an intermediate reference.
 				self.buf.ptr()
+			}
+			#[inline]
+			pub fn allocator(&self) -> &A {
+				self.buf.allocator()
 			}
 			#[inline]
 			pub unsafe fn set_len(&mut self, new_len: usize) {

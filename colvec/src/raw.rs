@@ -101,6 +101,11 @@ impl<const N:usize, T: StructInfo<N>, A: Allocator> RawColVec<N, T, A> {
 	pub const fn capacity(&self) -> usize {
 		self.inner.capacity(T::LAYOUT.size())
 	}
+	/// Returns a shared reference to the allocator backing this `RawVec`.
+	#[inline]
+	pub fn allocator(&self) -> &A {
+		self.inner.allocator()
+	}
 	#[inline]
 	#[track_caller]
 	pub fn reserve(&mut self, len: usize, additional: usize) {
@@ -206,6 +211,10 @@ impl<A: Allocator> RawColVecInner<A> {
 	#[inline]
 	const fn capacity(&self, elem_size: usize) -> usize {
 		if elem_size == 0 { usize::MAX } else { self.cap }
+	}
+	#[inline]
+	fn allocator(&self) -> &A {
+		&self.alloc
 	}
 	#[inline]
 	#[track_caller]

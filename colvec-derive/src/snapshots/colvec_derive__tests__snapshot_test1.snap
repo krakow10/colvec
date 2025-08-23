@@ -49,6 +49,20 @@ impl<A: ::colvec::alloc::Allocator> TestColVec<A> {
             }
         }
     }
+    #[must_use = "losing the pointer will leak memory"]
+    pub fn into_raw_parts(self) -> (*mut u8, usize, usize) {
+        let mut me = ::core::mem::ManuallyDrop::new(self);
+        (me.as_mut_ptr(), me.len(), me.capacity())
+    }
+    #[must_use = "losing the pointer will leak memory"]
+    pub fn into_raw_parts_with_alloc(self) -> (*mut u8, usize, usize, A) {
+        let mut me = ::core::mem::ManuallyDrop::new(self);
+        let len = me.len();
+        let capacity = me.capacity();
+        let ptr = me.as_mut_ptr();
+        let alloc = unsafe { ::core::ptr::read(me.allocator()) };
+        (ptr, len, capacity, alloc)
+    }
     #[inline]
     pub const fn capacity(&self) -> usize {
         self.buf.capacity()
@@ -64,6 +78,10 @@ impl<A: ::colvec::alloc::Allocator> TestColVec<A> {
     #[inline]
     const fn as_mut_ptr(&mut self) -> *mut u8 {
         self.buf.ptr()
+    }
+    #[inline]
+    pub fn allocator(&self) -> &A {
+        self.buf.allocator()
     }
     #[inline]
     pub unsafe fn set_len(&mut self, new_len: usize) {
