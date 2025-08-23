@@ -1,7 +1,7 @@
 #[cfg(feature = "allocator-api2")]
-pub use allocator_api2::alloc::{handle_alloc_error,Allocator};
+pub use allocator_api2::alloc::Allocator;
 #[cfg(feature = "nightly")]
-pub use core::alloc::{handle_alloc_error,Allocator};
+pub use core::alloc::Allocator;
 
 #[cfg(all(feature = "allocator-api2",feature = "std"))]
 pub use allocator_api2::alloc::Global;

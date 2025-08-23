@@ -10,7 +10,9 @@ use crate::error::TryReserveError;
 use crate::error::TryReserveErrorKind::*;
 use crate::fields::Fields;
 
-use crate::alloc::handle_alloc_error;
+// why isn't this in core::alloc ???
+extern crate alloc;
+use alloc::alloc::handle_alloc_error;
 
 // One central function responsible for reporting capacity overflows. This'll
 // ensure that the code generation related to these panics is minimal as there's
