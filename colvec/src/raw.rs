@@ -80,6 +80,16 @@ impl<const N:usize, T: StructInfo<N>, A: Allocator> RawColVec<N, T, A> {
 		}
 	}
 	#[inline]
+	pub unsafe fn from_raw_parts_in(ptr: *mut u8, capacity: usize, alloc: A) -> Self {
+		// SAFETY: Precondition passed to the caller
+		unsafe {
+			Self {
+				inner: RawColVecInner::from_raw_parts_in(ptr, capacity, alloc),
+				_marker: PhantomData,
+			}
+		}
+	}
+	#[inline]
 	pub const fn capacity(&self) -> usize {
 		self.inner.capacity(T::LAYOUT.size())
 	}
@@ -130,6 +140,10 @@ impl<A: Allocator> RawColVecInner<A> {
 			}
 			Err(err) => handle_error(err),
 		}
+	}
+	#[inline]
+	unsafe fn from_raw_parts_in(ptr: *mut u8, cap: usize, alloc: A) -> Self {
+		Self { ptr: unsafe { NonNull::new_unchecked(ptr) }, cap, alloc }
 	}
 	fn try_allocate_in(
 		capacity: usize,

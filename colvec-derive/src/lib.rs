@@ -55,6 +55,10 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 			pub fn with_capacity(capacity: usize) -> Self {
 				Self::with_capacity_in(capacity, ::colvec::alloc::Global)
 			}
+			#[inline]
+			pub unsafe fn from_raw_parts(ptr: *mut u8, length: usize, capacity: usize) -> Self {
+				unsafe { Self::from_raw_parts_in(ptr, length, capacity, ::colvec::alloc::Global) }
+			}
 		}
 	};
 
@@ -86,6 +90,10 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 			#[track_caller]
 			pub fn with_capacity_in(capacity: usize, alloc: A) -> Self {
 				Self { buf: ::colvec::raw::RawColVec::with_capacity_in(capacity, alloc), len: 0 }
+			}
+			#[inline]
+			pub unsafe fn from_raw_parts_in(ptr: *mut u8, length: usize, capacity: usize, alloc: A) -> Self {
+				unsafe { Self { buf: ::colvec::raw::RawColVec::from_raw_parts_in(ptr, capacity, alloc), len: length } }
 			}
 			#[inline]
 			pub const fn capacity(&self) -> usize {
