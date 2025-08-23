@@ -24,6 +24,7 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 	let colvec_ident=syn::Ident::new(&colvec_ident_string,ident.span());
 
 	let fields_count=fields.named.len();
+	#[cfg_attr(not(feature = "std"), expect(unused_mut))]
 	let mut colvec: syn::ItemStruct = syn::parse_quote!{
 		#vis struct #colvec_ident<A: ::colvec::alloc::Allocator>{
 			buf: ::colvec::raw::RawColVec<#fields_count, #ident, A>,
@@ -234,6 +235,7 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 		}
 	};
 
+	#[cfg_attr(not(feature = "std"), expect(unused_mut))]
 	let mut output=quote! {
 		#colvec
 
