@@ -1,1 +1,1 @@
-fn main() {}
+../../../colvec/src/main.rs
