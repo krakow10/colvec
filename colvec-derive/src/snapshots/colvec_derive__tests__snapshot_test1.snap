@@ -2,7 +2,7 @@
 source: colvec-derive/src/lib.rs
 expression: formatted
 ---
-pub struct TestColVec<A: ::colvec::alloc::Allocator = ::colvec::alloc::Global> {
+pub struct TestColVec<A: ::core::alloc::Allocator = std::alloc::Global> {
     buf: ::colvec::raw::RawColVec<4usize, Test, A>,
     len: usize,
 }
@@ -19,7 +19,7 @@ impl ::colvec::raw::StructInfo<4usize> for Test {
         size_of::<u32>(),
     ]);
 }
-impl<A: ::colvec::alloc::Allocator> TestColVec<A> {
+impl<A: ::core::alloc::Allocator> TestColVec<A> {
     #[inline]
     pub const fn new_in(alloc: A) -> Self {
         Self {
@@ -170,7 +170,7 @@ impl<A: ::colvec::alloc::Allocator> TestColVec<A> {
         self.len
     }
 }
-impl<A: ::colvec::alloc::Allocator> TestColVec<A> {
+impl<A: ::core::alloc::Allocator> TestColVec<A> {
     #[inline]
     pub const fn field0_slice(&self) -> &[u8] {
         let offset = self.buf.capacity()
@@ -228,7 +228,7 @@ impl<A: ::colvec::alloc::Allocator> TestColVec<A> {
         unsafe { ::core::slice::from_raw_parts_mut(ptr, self.len) }
     }
 }
-impl<A: ::colvec::alloc::Allocator> Drop for TestColVec<A> {
+impl<A: ::core::alloc::Allocator> Drop for TestColVec<A> {
     fn drop(&mut self) {
         unsafe {
             ::core::ptr::drop_in_place(self.field0_slice_mut());
@@ -238,7 +238,7 @@ impl<A: ::colvec::alloc::Allocator> Drop for TestColVec<A> {
         }
     }
 }
-impl<A: ::colvec::alloc::Allocator + Clone> Clone for TestColVec<A>
+impl<A: ::core::alloc::Allocator + Clone> Clone for TestColVec<A>
 where
     u8: Clone,
     Option<u8>: Clone,
@@ -247,11 +247,11 @@ where
 {
     fn clone(&self) -> Self {
         let alloc = self.allocator().clone();
-        struct DropGuard<'a, A: ::colvec::alloc::Allocator> {
+        struct DropGuard<'a, A: ::core::alloc::Allocator> {
             colvec: &'a mut TestColVec<A>,
             num_init: usize,
         }
-        impl<'a, A: ::colvec::alloc::Allocator> Drop for DropGuard<'a, A> {
+        impl<'a, A: ::core::alloc::Allocator> Drop for DropGuard<'a, A> {
             #[inline]
             fn drop(&mut self) {
                 unsafe {
@@ -336,12 +336,12 @@ where
         colvec
     }
 }
-impl TestColVec<::colvec::alloc::Global> {
+impl TestColVec<std::alloc::Global> {
     #[inline]
     #[must_use]
     pub const fn new() -> Self {
         Self {
-            buf: ::colvec::raw::RawColVec::new_in(::colvec::alloc::Global),
+            buf: ::colvec::raw::RawColVec::new_in(std::alloc::Global),
             len: 0,
         }
     }
@@ -349,12 +349,10 @@ impl TestColVec<::colvec::alloc::Global> {
     #[must_use]
     #[track_caller]
     pub fn with_capacity(capacity: usize) -> Self {
-        Self::with_capacity_in(capacity, ::colvec::alloc::Global)
+        Self::with_capacity_in(capacity, std::alloc::Global)
     }
     #[inline]
     pub unsafe fn from_raw_parts(ptr: *mut u8, length: usize, capacity: usize) -> Self {
-        unsafe {
-            Self::from_raw_parts_in(ptr, length, capacity, ::colvec::alloc::Global)
-        }
+        unsafe { Self::from_raw_parts_in(ptr, length, capacity, std::alloc::Global) }
     }
 }

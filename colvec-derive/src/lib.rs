@@ -29,7 +29,7 @@ fn derive_struct(ident: syn::Ident, vis: syn::Visibility, fields: syn::FieldsNam
 	let fields_count = fields.named.len();
 	#[cfg_attr(not(feature = "std"), expect(unused_mut))]
 	let mut colvec: syn::ItemStruct = syn::parse_quote! {
-		#vis struct #colvec_ident<A: ::colvec::alloc::Allocator>{
+		#vis struct #colvec_ident<A: ::core::alloc::Allocator>{
 			buf: ::colvec::raw::RawColVec<#fields_count, #ident, A>,
 			len: usize,
 		}
@@ -39,7 +39,7 @@ fn derive_struct(ident: syn::Ident, vis: syn::Visibility, fields: syn::FieldsNam
 	match colvec.generics.params.first_mut() {
 		Some(syn::GenericParam::Type(type_param)) => {
 			let eq_token = syn::Token![=](type_param.ident.span());
-			let default = syn::parse_quote! {::colvec::alloc::Global};
+			let default = syn::parse_quote! {std::alloc::Global};
 			type_param.default = Some((eq_token, default));
 		}
 		// colvec expression always contains type param
@@ -48,21 +48,21 @@ fn derive_struct(ident: syn::Ident, vis: syn::Visibility, fields: syn::FieldsNam
 
 	#[cfg(feature = "std")]
 	let global = quote! {
-		impl #colvec_ident<::colvec::alloc::Global>{
+		impl #colvec_ident<std::alloc::Global>{
 			#[inline]
 			#[must_use]
 			pub const fn new() -> Self {
-				Self { buf: ::colvec::raw::RawColVec::new_in(::colvec::alloc::Global), len: 0 }
+				Self { buf: ::colvec::raw::RawColVec::new_in(std::alloc::Global), len: 0 }
 			}
 			#[inline]
 			#[must_use]
 			#[track_caller]
 			pub fn with_capacity(capacity: usize) -> Self {
-				Self::with_capacity_in(capacity, ::colvec::alloc::Global)
+				Self::with_capacity_in(capacity, std::alloc::Global)
 			}
 			#[inline]
 			pub unsafe fn from_raw_parts(ptr: *mut u8, length: usize, capacity: usize) -> Self {
-				unsafe { Self::from_raw_parts_in(ptr, length, capacity, ::colvec::alloc::Global) }
+				unsafe { Self::from_raw_parts_in(ptr, length, capacity, std::alloc::Global) }
 			}
 		}
 	};
@@ -89,7 +89,7 @@ fn derive_struct(ident: syn::Ident, vis: syn::Visibility, fields: syn::FieldsNam
 		.iter()
 		.map(|field| field.ident.as_ref().unwrap().clone());
 	let impls = quote! {
-		impl<A: ::colvec::alloc::Allocator> #colvec_ident<A>{
+		impl<A: ::core::alloc::Allocator> #colvec_ident<A>{
 			#[inline]
 			pub const fn new_in(alloc: A) -> Self {
 				Self { buf: ::colvec::raw::RawColVec::new_in(alloc), len: 0 }
@@ -207,7 +207,7 @@ fn derive_struct(ident: syn::Ident, vis: syn::Visibility, fields: syn::FieldsNam
 		syn::Ident::new(&slice_ident, ident.span())
 	});
 	let drop = quote! {
-		impl<A: ::colvec::alloc::Allocator> Drop for #colvec_ident<A>{
+		impl<A: ::core::alloc::Allocator> Drop for #colvec_ident<A>{
 			fn drop(&mut self){
 				unsafe {
 					#(
@@ -240,17 +240,17 @@ fn derive_struct(ident: syn::Ident, vis: syn::Visibility, fields: syn::FieldsNam
 	});
 	let field_slice_mut_fn_idents2 = field_slice_mut_fn_idents1.clone();
 	let clone = quote! {
-		impl<A: ::colvec::alloc::Allocator + Clone> Clone for #colvec_ident<A>
+		impl<A: ::core::alloc::Allocator + Clone> Clone for #colvec_ident<A>
 			where
 				#(#field_types1: Clone,)*
 		{
 			fn clone(&self)->Self{
 				let alloc = self.allocator().clone();
-				struct DropGuard<'a, A: ::colvec::alloc::Allocator> {
+				struct DropGuard<'a, A: ::core::alloc::Allocator> {
 					colvec: &'a mut #colvec_ident<A>,
 					num_init: usize,
 				}
-				impl<'a, A: ::colvec::alloc::Allocator> Drop for DropGuard<'a, A> {
+				impl<'a, A: ::core::alloc::Allocator> Drop for DropGuard<'a, A> {
 					#[inline]
 					fn drop(&mut self) {
 						// SAFETY:
@@ -311,7 +311,7 @@ fn derive_struct(ident: syn::Ident, vis: syn::Visibility, fields: syn::FieldsNam
 		syn::Ident::new(&slice_ident, ident.span())
 	});
 	let field_access = quote! {
-		impl<A: ::colvec::alloc::Allocator> #colvec_ident<A>{
+		impl<A: ::core::alloc::Allocator> #colvec_ident<A>{
 			#(
 				#[inline]
 				pub const fn #field_slice_fn_idents(&self) -> &[#field_types] {

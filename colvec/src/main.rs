@@ -18,9 +18,8 @@ mod tests {
 	mod global {
 		extern crate alloc as core_alloc;
 		use core::ptr::NonNull;
-		use core_alloc::alloc::{Layout, alloc, dealloc};
-
-		use ::colvec::alloc::{AllocError, Allocator};
+		use core_alloc::alloc::{AllocError, Allocator, Layout};
+		use core_alloc::alloc::{alloc, dealloc};
 
 		#[derive(Copy, Clone)]
 		pub struct Global;

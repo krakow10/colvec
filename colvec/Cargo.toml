@@ -9,14 +9,9 @@ authors = ["Rhys Lloyd <krakow20@gmail.com>"]
 keywords = ["struct", "arrays", "vec", "no_std"]
 
 [dependencies]
-allocator-api2 = { version = "0.4.0", default-features = false, optional = true }
 colvec-derive = { workspace = true }
 compile_time_sort = "1.1.4"
 
 [features]
-default = ["std","allocator-api2"]
-std = ["allocator-api2?/std","colvec-derive/std"]
-
-# pick one
-nightly = []
-allocator-api2 = ["dep:allocator-api2"]
+default = ["std"]
+std = ["colvec-derive/std"]

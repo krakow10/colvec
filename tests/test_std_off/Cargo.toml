@@ -1,5 +1,5 @@
 [package]
-name = "test-nightly_off-std_on"
+name = "test-nightly_off-std_off"
 version = "0.1.0"
 edition = "2024"
 
@@ -7,9 +7,7 @@ edition = "2024"
 colvec = { path = "../../colvec", default-features = false }
 
 [features]
-default = ["allocator-api2","std"]
+default = []
 std = ["colvec/std"]
-nightly = ["colvec/nightly"]
-allocator-api2 = ["colvec/allocator-api2"]
 
 [workspace]
