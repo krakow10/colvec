@@ -25,7 +25,7 @@ pub enum TryReserveErrorKind {
 	AllocError {
 		/// The layout of allocation request that failed
 		layout: Layout,
-	}
+	},
 }
 
 impl From<TryReserveErrorKind> for TryReserveError {

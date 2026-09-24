@@ -29,12 +29,12 @@ enum AllocInit {
 	Zeroed,
 }
 
-pub struct RawColVec<const N:usize, T: StructInfo<N>, A: Allocator> {
+pub struct RawColVec<const N: usize, T: StructInfo<N>, A: Allocator> {
 	inner: RawColVecInner<A>,
 	_marker: PhantomData<T>,
 }
-unsafe impl<const N:usize, T: Send + StructInfo<N>, A: Allocator> Send for RawColVec<N, T, A> {}
-unsafe impl<const N:usize, T: Sync + StructInfo<N>, A: Allocator> Sync for RawColVec<N, T, A> {}
+unsafe impl<const N: usize, T: Send + StructInfo<N>, A: Allocator> Send for RawColVec<N, T, A> {}
+unsafe impl<const N: usize, T: Sync + StructInfo<N>, A: Allocator> Sync for RawColVec<N, T, A> {}
 
 struct RawColVecInner<A: Allocator> {
 	ptr: NonNull<u8>,
@@ -43,9 +43,9 @@ struct RawColVecInner<A: Allocator> {
 }
 
 // TODO: don't do this
-pub trait StructInfo<const N:usize> {
-	const LAYOUT:Layout;
-	const FIELDS:Fields::<N>;
+pub trait StructInfo<const N: usize> {
+	const LAYOUT: Layout;
+	const FIELDS: Fields<N>;
 }
 
 // Tiny Vecs are dumb. Skip to:
@@ -63,7 +63,7 @@ const fn min_non_zero_cap(size: usize) -> usize {
 	}
 }
 
-impl<const N:usize, T: StructInfo<N>, A: Allocator> RawColVec<N, T, A> {
+impl<const N: usize, T: StructInfo<N>, A: Allocator> RawColVec<N, T, A> {
 	#[inline]
 	pub const fn new_in(alloc: A) -> Self {
 		Self {
@@ -121,11 +121,11 @@ impl<const N:usize, T: StructInfo<N>, A: Allocator> RawColVec<N, T, A> {
 	#[inline(never)]
 	#[track_caller]
 	pub fn grow_one(&mut self) {
-		self.inner.grow_one(T::LAYOUT,&T::FIELDS)
+		self.inner.grow_one(T::LAYOUT, &T::FIELDS)
 	}
 }
 
-impl<const N:usize, T: StructInfo<N>, A: Allocator> Drop for RawColVec<N, T, A> {
+impl<const N: usize, T: StructInfo<N>, A: Allocator> Drop for RawColVec<N, T, A> {
 	/// Frees the memory owned by the `RawVec` *without* trying to drop its contents.
 	fn drop(&mut self) {
 		// SAFETY: We are in a Drop impl, self.inner will not be used again.
@@ -164,7 +164,11 @@ impl<A: Allocator> RawColVecInner<A> {
 	}
 	#[inline]
 	unsafe fn from_raw_parts_in(ptr: *mut u8, cap: usize, alloc: A) -> Self {
-		Self { ptr: unsafe { NonNull::new_unchecked(ptr) }, cap, alloc }
+		Self {
+			ptr: unsafe { NonNull::new_unchecked(ptr) },
+			cap,
+			alloc,
+		}
 	}
 	fn try_allocate_in(
 		capacity: usize,
@@ -183,7 +187,9 @@ impl<A: Allocator> RawColVecInner<A> {
 
 		// Don't allocate here because `Drop` will not deallocate when `capacity` is 0.
 		if layout.size() == 0 {
-			return Ok(Self::new_in(alloc, unsafe{NonZero::new_unchecked(elem_layout.align())}));
+			return Ok(Self::new_in(alloc, unsafe {
+				NonZero::new_unchecked(elem_layout.align())
+			}));
 		}
 
 		if let Err(err) = alloc_guard(layout.size()) {
@@ -218,13 +224,19 @@ impl<A: Allocator> RawColVecInner<A> {
 	}
 	#[inline]
 	#[track_caller]
-	fn reserve<const N:usize>(&mut self, len: usize, additional: usize, elem_layout: Layout, fields: &Fields<N>) {
+	fn reserve<const N: usize>(
+		&mut self,
+		len: usize,
+		additional: usize,
+		elem_layout: Layout,
+		fields: &Fields<N>,
+	) {
 		// Callers expect this function to be very cheap when there is already sufficient capacity.
 		// Therefore, we move all the resizing and error-handling logic from grow_amortized and
 		// handle_reserve behind a call, while making sure that this function is likely to be
 		// inlined as just a comparison and a call if the comparison fails.
 		#[cold]
-		fn do_reserve_and_handle<const N:usize, A: Allocator>(
+		fn do_reserve_and_handle<const N: usize, A: Allocator>(
 			slf: &mut RawColVecInner<A>,
 			len: usize,
 			additional: usize,
@@ -242,7 +254,7 @@ impl<A: Allocator> RawColVecInner<A> {
 	}
 	#[inline]
 	#[track_caller]
-	fn grow_one<const N:usize>(&mut self, elem_layout: Layout, fields: &Fields<N>) {
+	fn grow_one<const N: usize>(&mut self, elem_layout: Layout, fields: &Fields<N>) {
 		if let Err(err) = self.grow_amortized(self.cap, 1, elem_layout, fields) {
 			handle_error(err);
 		}
@@ -275,7 +287,7 @@ impl<A: Allocator> RawColVecInner<A> {
 		self.ptr = ptr.cast();
 		self.cap = cap;
 	}
-	fn grow_amortized<const N:usize>(
+	fn grow_amortized<const N: usize>(
 		&mut self,
 		len: usize,
 		additional: usize,
@@ -337,7 +349,7 @@ impl<A: Allocator> RawColVecInner<A> {
 // not marked inline(never) since we want optimizers to be able to observe the specifics of this
 // function, see tests/codegen/vec-reserve-extend.rs.
 #[cold]
-fn finish_grow<const N:usize,A>(
+fn finish_grow<const N: usize, A>(
 	new_layout: Layout,
 	current_memory: Option<(NonNull<u8>, Layout)>,
 	alloc: &mut A,
@@ -358,15 +370,16 @@ where
 			hint::assert_unchecked(old_layout.align() == new_layout.align());
 			alloc.grow(ptr, old_layout, new_layout)
 		};
-		let Ok(region) = memory else{
+		let Ok(region) = memory else {
 			return Err(AllocError { layout: new_layout }.into());
 		};
 
-		unsafe{ fields.grow_fields(region.as_ptr().cast(), old_capacity, new_capacity, len) }
+		unsafe { fields.grow_fields(region.as_ptr().cast(), old_capacity, new_capacity, len) }
 
 		Ok(region)
 	} else {
-		alloc.allocate(new_layout)
+		alloc
+			.allocate(new_layout)
 			.map_err(|_| AllocError { layout: new_layout }.into())
 	}
 }
@@ -379,7 +392,6 @@ fn handle_error(e: TryReserveError) -> ! {
 		AllocError { layout, .. } => handle_alloc_error(layout),
 	}
 }
-
 
 // We need to guarantee the following:
 // * We don't ever allocate `> isize::MAX` byte-size objects.
@@ -404,7 +416,7 @@ struct LayoutError;
 const fn repeat_packed(layout: &Layout, n: usize) -> Result<Layout, LayoutError> {
 	if let Some(size) = layout.size().checked_mul(n) {
 		// The safe constructor is called here to enforce the isize size limit.
-		Ok(unsafe{ Layout::from_size_align_unchecked(size, layout.align()) })
+		Ok(unsafe { Layout::from_size_align_unchecked(size, layout.align()) })
 	} else {
 		Err(LayoutError)
 	}

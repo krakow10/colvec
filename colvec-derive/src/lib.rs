@@ -7,25 +7,28 @@ use syn::DeriveInput;
 
 #[cfg(not(test))]
 #[proc_macro_derive(ColVec)]
-pub fn colvec_derive(input:TokenStream)->TokenStream{
-	let input:DeriveInput=syn::parse_macro_input!(input);
+pub fn colvec_derive(input: TokenStream) -> TokenStream {
+	let input: DeriveInput = syn::parse_macro_input!(input);
 	colvec_derive_inner(input)
 }
 
-fn colvec_derive_inner(input:DeriveInput)->TokenStream{
-	match input.data{
-		syn::Data::Struct(syn::DataStruct{fields:syn::Fields::Named(fields_named),..})=>derive_struct(input.ident,input.vis,fields_named),
-		_=>unimplemented!("Only structs are supported"),
+fn colvec_derive_inner(input: DeriveInput) -> TokenStream {
+	match input.data {
+		syn::Data::Struct(syn::DataStruct {
+			fields: syn::Fields::Named(fields_named),
+			..
+		}) => derive_struct(input.ident, input.vis, fields_named),
+		_ => unimplemented!("Only structs are supported"),
 	}
 }
 
-fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->TokenStream{
-	let colvec_ident_string=format!("{ident}ColVec");
-	let colvec_ident=syn::Ident::new(&colvec_ident_string,ident.span());
+fn derive_struct(ident: syn::Ident, vis: syn::Visibility, fields: syn::FieldsNamed) -> TokenStream {
+	let colvec_ident_string = format!("{ident}ColVec");
+	let colvec_ident = syn::Ident::new(&colvec_ident_string, ident.span());
 
-	let fields_count=fields.named.len();
+	let fields_count = fields.named.len();
 	#[cfg_attr(not(feature = "std"), expect(unused_mut))]
-	let mut colvec: syn::ItemStruct = syn::parse_quote!{
+	let mut colvec: syn::ItemStruct = syn::parse_quote! {
 		#vis struct #colvec_ident<A: ::colvec::alloc::Allocator>{
 			buf: ::colvec::raw::RawColVec<#fields_count, #ident, A>,
 			len: usize,
@@ -33,12 +36,12 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 	};
 
 	#[cfg(feature = "std")]
-	match colvec.generics.params.first_mut(){
-		Some(syn::GenericParam::Type(type_param))=>{
-			let eq_token=syn::Token![=](type_param.ident.span());
-			let default=syn::parse_quote!{::colvec::alloc::Global};
-			type_param.default=Some((eq_token,default));
-		},
+	match colvec.generics.params.first_mut() {
+		Some(syn::GenericParam::Type(type_param)) => {
+			let eq_token = syn::Token![=](type_param.ident.span());
+			let default = syn::parse_quote! {::colvec::alloc::Global};
+			type_param.default = Some((eq_token, default));
+		}
 		// colvec expression always contains type param
 		_ => unreachable!(),
 	}
@@ -65,7 +68,7 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 	};
 
 	// this trait smuggles information about the input type into RawColVec and RawColVecInner
-	let fields_types=fields.named.iter().map(|field|field.ty.clone());
+	let fields_types = fields.named.iter().map(|field| field.ty.clone());
 	let struct_info = quote! {
 		impl ::colvec::raw::StructInfo<#fields_count> for #ident{
 			const LAYOUT: ::core::alloc::Layout = unsafe {
@@ -79,9 +82,12 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 		}
 	};
 
-	let field_indices=0..fields_count;
-	let field_types=fields.named.iter().map(|field|field.ty.clone());
-	let field_idents=fields.named.iter().map(|field|field.ident.as_ref().unwrap().clone());
+	let field_indices = 0..fields_count;
+	let field_types = fields.named.iter().map(|field| field.ty.clone());
+	let field_idents = fields
+		.named
+		.iter()
+		.map(|field| field.ident.as_ref().unwrap().clone());
 	let impls = quote! {
 		impl<A: ::colvec::alloc::Allocator> #colvec_ident<A>{
 			#[inline]
@@ -195,10 +201,10 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 		}
 	};
 
-	let field_slice_mut_fn_idents=fields.named.iter().map(|field|{
-		let ident=field.ident.as_ref().unwrap();
-		let slice_ident=format!("{ident}_slice_mut");
-		syn::Ident::new(&slice_ident,ident.span())
+	let field_slice_mut_fn_idents = fields.named.iter().map(|field| {
+		let ident = field.ident.as_ref().unwrap();
+		let slice_ident = format!("{ident}_slice_mut");
+		syn::Ident::new(&slice_ident, ident.span())
 	});
 	let drop = quote! {
 		impl<A: ::colvec::alloc::Allocator> Drop for #colvec_ident<A>{
@@ -212,24 +218,27 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 		}
 	};
 
-	let field_indices=0..fields_count;
-	let field_types1=fields.named.iter().map(|field|field.ty.clone());
-	let field_types2=field_types1.clone();
-	let field_idents1=fields.named.iter().map(|field|field.ident.as_ref().unwrap().clone());
-	let field_idents2=field_idents1.clone();
-	let field_slice_fn_idents1=fields.named.iter().map(|field|{
-		let ident=field.ident.as_ref().unwrap();
-		let slice_ident=format!("{ident}_slice");
-		syn::Ident::new(&slice_ident,ident.span())
+	let field_indices = 0..fields_count;
+	let field_types1 = fields.named.iter().map(|field| field.ty.clone());
+	let field_types2 = field_types1.clone();
+	let field_idents1 = fields
+		.named
+		.iter()
+		.map(|field| field.ident.as_ref().unwrap().clone());
+	let field_idents2 = field_idents1.clone();
+	let field_slice_fn_idents1 = fields.named.iter().map(|field| {
+		let ident = field.ident.as_ref().unwrap();
+		let slice_ident = format!("{ident}_slice");
+		syn::Ident::new(&slice_ident, ident.span())
 	});
-	let field_slice_fn_idents2=field_slice_fn_idents1.clone();
-	let field_slice_fn_idents3=field_slice_fn_idents1.clone();
-	let field_slice_mut_fn_idents1=fields.named.iter().map(|field|{
-		let ident=field.ident.as_ref().unwrap();
-		let slice_ident=format!("{ident}_slice_mut");
-		syn::Ident::new(&slice_ident,ident.span())
+	let field_slice_fn_idents2 = field_slice_fn_idents1.clone();
+	let field_slice_fn_idents3 = field_slice_fn_idents1.clone();
+	let field_slice_mut_fn_idents1 = fields.named.iter().map(|field| {
+		let ident = field.ident.as_ref().unwrap();
+		let slice_ident = format!("{ident}_slice_mut");
+		syn::Ident::new(&slice_ident, ident.span())
 	});
-	let field_slice_mut_fn_idents2=field_slice_mut_fn_idents1.clone();
+	let field_slice_mut_fn_idents2 = field_slice_mut_fn_idents1.clone();
 	let clone = quote! {
 		impl<A: ::colvec::alloc::Allocator + Clone> Clone for #colvec_ident<A>
 			where
@@ -289,17 +298,17 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 		}
 	};
 
-	let field_indices=0..fields_count;
-	let field_types=fields.named.iter().map(|field|field.ty.clone());
-	let field_slice_fn_idents=fields.named.iter().map(|field|{
-		let ident=field.ident.as_ref().unwrap();
-		let slice_ident=format!("{ident}_slice");
-		syn::Ident::new(&slice_ident,ident.span())
+	let field_indices = 0..fields_count;
+	let field_types = fields.named.iter().map(|field| field.ty.clone());
+	let field_slice_fn_idents = fields.named.iter().map(|field| {
+		let ident = field.ident.as_ref().unwrap();
+		let slice_ident = format!("{ident}_slice");
+		syn::Ident::new(&slice_ident, ident.span())
 	});
-	let field_slice_mut_fn_idents=fields.named.iter().map(|field|{
-		let ident=field.ident.as_ref().unwrap();
-		let slice_ident=format!("{ident}_slice_mut");
-		syn::Ident::new(&slice_ident,ident.span())
+	let field_slice_mut_fn_idents = fields.named.iter().map(|field| {
+		let ident = field.ident.as_ref().unwrap();
+		let slice_ident = format!("{ident}_slice_mut");
+		syn::Ident::new(&slice_ident, ident.span())
 	});
 	let field_access = quote! {
 		impl<A: ::colvec::alloc::Allocator> #colvec_ident<A>{
@@ -331,7 +340,7 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 	};
 
 	#[cfg_attr(not(feature = "std"), expect(unused_mut))]
-	let mut output=quote! {
+	let mut output = quote! {
 		#colvec
 
 		#struct_info
@@ -356,7 +365,7 @@ mod tests {
 
 	#[test]
 	fn snapshot_test1() {
-		let test1:syn::ItemStruct = parse_quote! {
+		let test1: syn::ItemStruct = parse_quote! {
 			pub struct Test{
 				field0:u8,
 				field1:Option<u8>,
