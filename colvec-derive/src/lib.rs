@@ -336,10 +336,11 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 
 		#struct_info
 
-		#drop
-		#clone
 		#impls
 		#field_access
+
+		#drop
+		#clone
 	};
 
 	#[cfg(feature = "std")]
