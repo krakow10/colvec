@@ -22,54 +22,10 @@ impl ::colvec::raw::StructInfo<4usize> for Test {
 impl<A: ::colvec::alloc::Allocator> Drop for TestColVec<A> {
     fn drop(&mut self) {
         unsafe {
-            let slice = ::core::slice::from_raw_parts_mut(
-                self
-                    .as_mut_ptr()
-                    .add(
-                        self.buf.capacity()
-                            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
-                                .offset_of(0usize),
-                    )
-                    .cast::<u8>(),
-                self.len,
-            );
-            ::core::ptr::drop_in_place(slice);
-            let slice = ::core::slice::from_raw_parts_mut(
-                self
-                    .as_mut_ptr()
-                    .add(
-                        self.buf.capacity()
-                            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
-                                .offset_of(1usize),
-                    )
-                    .cast::<Option<u8>>(),
-                self.len,
-            );
-            ::core::ptr::drop_in_place(slice);
-            let slice = ::core::slice::from_raw_parts_mut(
-                self
-                    .as_mut_ptr()
-                    .add(
-                        self.buf.capacity()
-                            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
-                                .offset_of(2usize),
-                    )
-                    .cast::<i16>(),
-                self.len,
-            );
-            ::core::ptr::drop_in_place(slice);
-            let slice = ::core::slice::from_raw_parts_mut(
-                self
-                    .as_mut_ptr()
-                    .add(
-                        self.buf.capacity()
-                            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
-                                .offset_of(3usize),
-                    )
-                    .cast::<u32>(),
-                self.len,
-            );
-            ::core::ptr::drop_in_place(slice);
+            ::core::ptr::drop_in_place(self.field0_slice_mut());
+            ::core::ptr::drop_in_place(self.field1_slice_mut());
+            ::core::ptr::drop_in_place(self.field2_slice_mut());
+            ::core::ptr::drop_in_place(self.field3_slice_mut());
         }
     }
 }
