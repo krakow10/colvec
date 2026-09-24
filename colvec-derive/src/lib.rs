@@ -35,8 +35,9 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 	#[cfg(feature = "std")]
 	match colvec.generics.params.first_mut(){
 		Some(syn::GenericParam::Type(type_param))=>{
-			type_param.eq_token=Some(syn::Token![=](type_param.ident.span()));
-			type_param.default=Some(syn::parse_quote!{::colvec::alloc::Global});
+			let eq_token=syn::Token![=](type_param.ident.span());
+			let default=syn::parse_quote!{::colvec::alloc::Global};
+			type_param.default=Some((eq_token,default));
 		},
 		// colvec expression always contains type param
 		_ => unreachable!(),
