@@ -173,131 +173,59 @@ impl<A: ::colvec::alloc::Allocator> TestColVec<A> {
 impl<A: ::colvec::alloc::Allocator> TestColVec<A> {
     #[inline]
     pub const fn field0_slice(&self) -> &[u8] {
-        unsafe {
-            ::core::slice::from_raw_parts(
-                self
-                    .as_ptr()
-                    .add(
-                        self.buf.capacity()
-                            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
-                                .offset_of(0usize),
-                    )
-                    .cast::<u8>(),
-                self.len,
-            )
-        }
+        let offset = self.buf.capacity()
+            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS.offset_of(0usize);
+        let ptr = unsafe { self.as_ptr().add(offset) }.cast::<u8>();
+        unsafe { ::core::slice::from_raw_parts(ptr, self.len) }
     }
     #[inline]
     pub const fn field0_slice_mut(&mut self) -> &mut [u8] {
-        unsafe {
-            ::core::slice::from_raw_parts_mut(
-                self
-                    .as_mut_ptr()
-                    .add(
-                        self.buf.capacity()
-                            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
-                                .offset_of(0usize),
-                    )
-                    .cast::<u8>(),
-                self.len,
-            )
-        }
+        let offset = self.buf.capacity()
+            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS.offset_of(0usize);
+        let ptr = unsafe { self.as_mut_ptr().add(offset) }.cast::<u8>();
+        unsafe { ::core::slice::from_raw_parts_mut(ptr, self.len) }
     }
     #[inline]
     pub const fn field1_slice(&self) -> &[Option<u8>] {
-        unsafe {
-            ::core::slice::from_raw_parts(
-                self
-                    .as_ptr()
-                    .add(
-                        self.buf.capacity()
-                            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
-                                .offset_of(1usize),
-                    )
-                    .cast::<Option<u8>>(),
-                self.len,
-            )
-        }
+        let offset = self.buf.capacity()
+            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS.offset_of(1usize);
+        let ptr = unsafe { self.as_ptr().add(offset) }.cast::<Option<u8>>();
+        unsafe { ::core::slice::from_raw_parts(ptr, self.len) }
     }
     #[inline]
     pub const fn field1_slice_mut(&mut self) -> &mut [Option<u8>] {
-        unsafe {
-            ::core::slice::from_raw_parts_mut(
-                self
-                    .as_mut_ptr()
-                    .add(
-                        self.buf.capacity()
-                            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
-                                .offset_of(1usize),
-                    )
-                    .cast::<Option<u8>>(),
-                self.len,
-            )
-        }
+        let offset = self.buf.capacity()
+            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS.offset_of(1usize);
+        let ptr = unsafe { self.as_mut_ptr().add(offset) }.cast::<Option<u8>>();
+        unsafe { ::core::slice::from_raw_parts_mut(ptr, self.len) }
     }
     #[inline]
     pub const fn field2_slice(&self) -> &[i16] {
-        unsafe {
-            ::core::slice::from_raw_parts(
-                self
-                    .as_ptr()
-                    .add(
-                        self.buf.capacity()
-                            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
-                                .offset_of(2usize),
-                    )
-                    .cast::<i16>(),
-                self.len,
-            )
-        }
+        let offset = self.buf.capacity()
+            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS.offset_of(2usize);
+        let ptr = unsafe { self.as_ptr().add(offset) }.cast::<i16>();
+        unsafe { ::core::slice::from_raw_parts(ptr, self.len) }
     }
     #[inline]
     pub const fn field2_slice_mut(&mut self) -> &mut [i16] {
-        unsafe {
-            ::core::slice::from_raw_parts_mut(
-                self
-                    .as_mut_ptr()
-                    .add(
-                        self.buf.capacity()
-                            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
-                                .offset_of(2usize),
-                    )
-                    .cast::<i16>(),
-                self.len,
-            )
-        }
+        let offset = self.buf.capacity()
+            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS.offset_of(2usize);
+        let ptr = unsafe { self.as_mut_ptr().add(offset) }.cast::<i16>();
+        unsafe { ::core::slice::from_raw_parts_mut(ptr, self.len) }
     }
     #[inline]
     pub const fn field3_slice(&self) -> &[u32] {
-        unsafe {
-            ::core::slice::from_raw_parts(
-                self
-                    .as_ptr()
-                    .add(
-                        self.buf.capacity()
-                            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
-                                .offset_of(3usize),
-                    )
-                    .cast::<u32>(),
-                self.len,
-            )
-        }
+        let offset = self.buf.capacity()
+            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS.offset_of(3usize);
+        let ptr = unsafe { self.as_ptr().add(offset) }.cast::<u32>();
+        unsafe { ::core::slice::from_raw_parts(ptr, self.len) }
     }
     #[inline]
     pub const fn field3_slice_mut(&mut self) -> &mut [u32] {
-        unsafe {
-            ::core::slice::from_raw_parts_mut(
-                self
-                    .as_mut_ptr()
-                    .add(
-                        self.buf.capacity()
-                            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
-                                .offset_of(3usize),
-                    )
-                    .cast::<u32>(),
-                self.len,
-            )
-        }
+        let offset = self.buf.capacity()
+            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS.offset_of(3usize);
+        let ptr = unsafe { self.as_mut_ptr().add(offset) }.cast::<u32>();
+        unsafe { ::core::slice::from_raw_parts_mut(ptr, self.len) }
     }
 }
 impl<A: ::colvec::alloc::Allocator> Drop for TestColVec<A> {

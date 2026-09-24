@@ -315,25 +315,15 @@ fn derive_struct(ident: syn::Ident, vis: syn::Visibility, fields: syn::FieldsNam
 			#(
 				#[inline]
 				pub const fn #field_slice_fn_idents(&self) -> &[#field_types] {
-					unsafe {
-						::core::slice::from_raw_parts(
-							self.as_ptr()
-								.add(self.buf.capacity() * <#ident as ::colvec::raw::StructInfo<#fields_count>>::FIELDS.offset_of(#field_indices))
-								.cast::<#field_types>(),
-							self.len
-						)
-					}
+					let offset = self.buf.capacity() * <#ident as ::colvec::raw::StructInfo<#fields_count>>::FIELDS.offset_of(#field_indices);
+					let ptr = unsafe{ self.as_ptr().add(offset) }.cast::<#field_types>();
+					unsafe { ::core::slice::from_raw_parts(ptr, self.len) }
 				}
 				#[inline]
 				pub const fn #field_slice_mut_fn_idents(&mut self) -> &mut [#field_types] {
-					unsafe {
-						::core::slice::from_raw_parts_mut(
-							self.as_mut_ptr()
-								.add(self.buf.capacity() * <#ident as ::colvec::raw::StructInfo<#fields_count>>::FIELDS.offset_of(#field_indices))
-								.cast::<#field_types>(),
-							self.len
-						)
-					}
+					let offset = self.buf.capacity() * <#ident as ::colvec::raw::StructInfo<#fields_count>>::FIELDS.offset_of(#field_indices);
+					let ptr = unsafe{ self.as_mut_ptr().add(offset) }.cast::<#field_types>();
+					unsafe { ::core::slice::from_raw_parts_mut(ptr, self.len) }
 				}
 			)*
 		}
