@@ -29,7 +29,13 @@ impl<A: ::colvec::alloc::Allocator> Drop for TestColVec<A> {
         }
     }
 }
-impl<A: ::colvec::alloc::Allocator + Clone> Clone for TestColVec<A> {
+impl<A: ::colvec::alloc::Allocator + Clone> Clone for TestColVec<A>
+where
+    u8: Clone,
+    Option<u8>: Clone,
+    i16: Clone,
+    u32: Clone,
+{
     fn clone(&self) -> Self {
         let alloc = self.allocator().clone();
         struct DropGuard<'a, A: ::colvec::alloc::Allocator> {

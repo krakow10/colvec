@@ -213,7 +213,8 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 	};
 
 	let field_indices=0..fields_count;
-	let field_types=fields.named.iter().map(|field|field.ty.clone());
+	let field_types1=fields.named.iter().map(|field|field.ty.clone());
+	let field_types2=field_types1.clone();
 	let field_idents1=fields.named.iter().map(|field|field.ident.as_ref().unwrap().clone());
 	let field_idents2=field_idents1.clone();
 	let field_slice_fn_idents1=fields.named.iter().map(|field|{
@@ -230,7 +231,10 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 	});
 	let field_slice_mut_fn_idents2=field_slice_mut_fn_idents1.clone();
 	let clone = quote! {
-		impl<A: ::colvec::alloc::Allocator + Clone> Clone for #colvec_ident<A>{
+		impl<A: ::colvec::alloc::Allocator + Clone> Clone for #colvec_ident<A>
+			where
+				#(#field_types1: Clone,)*
+		{
 			fn clone(&self)->Self{
 				let alloc = self.allocator().clone();
 				struct DropGuard<'a, A: ::colvec::alloc::Allocator> {
@@ -259,7 +263,7 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 					let #field_slice_mut_fn_idents1 = unsafe {
 						::core::slice::from_raw_parts_mut(
 							ptr.add(cap * <#ident as ::colvec::raw::StructInfo<#fields_count>>::FIELDS.offset_of(#field_indices))
-								.cast::<::core::mem::MaybeUninit<#field_types>>(),
+								.cast::<::core::mem::MaybeUninit<#field_types2>>(),
 							self.len
 						)
 					};
