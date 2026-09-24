@@ -164,11 +164,8 @@ impl<A: Allocator> RawColVecInner<A> {
 	}
 	#[inline]
 	unsafe fn from_raw_parts_in(ptr: *mut u8, cap: usize, alloc: A) -> Self {
-		Self {
-			ptr: unsafe { NonNull::new_unchecked(ptr) },
-			cap,
-			alloc,
-		}
+		let ptr = unsafe { NonNull::new_unchecked(ptr) };
+		Self { ptr, cap, alloc }
 	}
 	fn try_allocate_in(
 		capacity: usize,
