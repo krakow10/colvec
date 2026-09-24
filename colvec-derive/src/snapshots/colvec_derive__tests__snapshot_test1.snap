@@ -19,6 +19,60 @@ impl ::colvec::raw::StructInfo<4usize> for Test {
         size_of::<u32>(),
     ]);
 }
+impl<A: ::colvec::alloc::Allocator> Drop for TestColVec<A> {
+    fn drop(&mut self) {
+        unsafe {
+            let slice = ::core::slice::from_raw_parts_mut(
+                self
+                    .as_mut_ptr()
+                    .add(
+                        self.buf.capacity()
+                            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
+                                .offset_of(0usize),
+                    )
+                    .cast::<u8>(),
+                self.len,
+            );
+            ::core::ptr::drop_in_place(slice);
+            let slice = ::core::slice::from_raw_parts_mut(
+                self
+                    .as_mut_ptr()
+                    .add(
+                        self.buf.capacity()
+                            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
+                                .offset_of(1usize),
+                    )
+                    .cast::<Option<u8>>(),
+                self.len,
+            );
+            ::core::ptr::drop_in_place(slice);
+            let slice = ::core::slice::from_raw_parts_mut(
+                self
+                    .as_mut_ptr()
+                    .add(
+                        self.buf.capacity()
+                            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
+                                .offset_of(2usize),
+                    )
+                    .cast::<i16>(),
+                self.len,
+            );
+            ::core::ptr::drop_in_place(slice);
+            let slice = ::core::slice::from_raw_parts_mut(
+                self
+                    .as_mut_ptr()
+                    .add(
+                        self.buf.capacity()
+                            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
+                                .offset_of(3usize),
+                    )
+                    .cast::<u32>(),
+                self.len,
+            );
+            ::core::ptr::drop_in_place(slice);
+        }
+    }
+}
 impl<A: ::colvec::alloc::Allocator> TestColVec<A> {
     #[inline]
     pub const fn new_in(alloc: A) -> Self {

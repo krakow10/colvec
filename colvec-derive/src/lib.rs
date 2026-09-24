@@ -197,6 +197,26 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 
 	let field_indices=0..fields_count;
 	let field_types=fields.named.iter().map(|field|field.ty.clone());
+	let drop = quote! {
+		impl<A: ::colvec::alloc::Allocator> Drop for #colvec_ident<A>{
+			fn drop(&mut self){
+				unsafe {
+					#(
+						let slice = ::core::slice::from_raw_parts_mut(
+							self.as_mut_ptr()
+								.add(self.buf.capacity() * <#ident as ::colvec::raw::StructInfo<#fields_count>>::FIELDS.offset_of(#field_indices))
+								.cast::<#field_types>(),
+							self.len
+						);
+						::core::ptr::drop_in_place(slice);
+					)*
+				}
+			}
+		}
+	};
+
+	let field_indices=0..fields_count;
+	let field_types=fields.named.iter().map(|field|field.ty.clone());
 	let field_slice_fn_idents=fields.named.iter().map(|field|{
 		let ident=field.ident.as_ref().unwrap();
 		let slice_ident=format!("{ident}_slice");
@@ -242,6 +262,7 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 
 		#struct_info
 
+		#drop
 		#impls
 		#field_access
 	};
