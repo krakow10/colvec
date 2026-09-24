@@ -121,4 +121,62 @@ mod tests {
 		assert_eq!(&[false,true], bugs.is_red_slice());
 		assert_eq!(&[1,1337], bugs.coolness_slice());
 	}
+
+	#[test]
+	fn test_clone() {
+		#[derive(ColVec)]
+		struct Test{
+			field0:u8,
+			field1:i32,
+		}
+
+		#[cfg(feature = "std")]
+		let mut test=TestColVec::new();
+		#[cfg(not(feature = "std"))]
+		let mut test=TestColVec::new_in(global::Global);
+
+		// cloning an empty colvec works
+		assert_eq!(0, test.clone().len());
+
+		// len=9 grows the original to capacity 16, while the clone is
+		// allocated with the exact capacity 12 (a multiple of the align 4)
+		for i in 0..9 {
+			test.push(Test{
+				field0:i as u8,
+				field1:i as i32,
+			});
+		}
+
+		let mut cloned=test.clone();
+
+		assert_eq!(9, cloned.len());
+		assert_eq!(test.field0_slice(), cloned.field0_slice());
+		assert_eq!(test.field1_slice(), cloned.field1_slice());
+
+		// the clone is independent of the original
+		cloned.push(Test{
+			field0:255,
+			field1:-1,
+		});
+		assert_eq!(9, test.len());
+		assert_eq!(10, cloned.len());
+	}
+
+	#[test]
+	fn test_clone_zst() {
+		#[derive(ColVec)]
+		struct ZST{}
+
+		#[cfg(feature = "std")]
+		let mut test=ZSTColVec::new();
+		#[cfg(not(feature = "std"))]
+		let mut test=ZSTColVec::new_in(global::Global);
+
+		test.push(ZST{});
+		test.push(ZST{});
+
+		let cloned=test.clone();
+
+		assert_eq!(2, cloned.len());
+	}
 }
