@@ -29,6 +29,97 @@ impl<A: ::colvec::alloc::Allocator> Drop for TestColVec<A> {
         }
     }
 }
+impl<A: ::colvec::alloc::Allocator + Clone> Clone for TestColVec<A> {
+    fn clone(&self) -> Self {
+        let alloc = self.allocator().clone();
+        struct DropGuard<'a, A: ::colvec::alloc::Allocator> {
+            colvec: &'a mut TestColVec<A>,
+            num_init: usize,
+        }
+        impl<'a, A: ::colvec::alloc::Allocator> Drop for DropGuard<'a, A> {
+            #[inline]
+            fn drop(&mut self) {
+                unsafe {
+                    self.colvec.set_len(self.num_init);
+                }
+            }
+        }
+        let mut colvec = Self::with_capacity_in(self.len(), alloc);
+        let mut guard = DropGuard {
+            colvec: &mut colvec,
+            num_init: 0,
+        };
+        let field0_slice = self.field0_slice();
+        let field1_slice = self.field1_slice();
+        let field2_slice = self.field2_slice();
+        let field3_slice = self.field3_slice();
+        let ptr = guard.colvec.as_mut_ptr();
+        let field0_slice_mut = unsafe {
+            ::core::slice::from_raw_parts_mut(
+                ptr
+                    .add(
+                        self.buf.capacity()
+                            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
+                                .offset_of(0usize),
+                    )
+                    .cast::<::core::mem::MaybeUninit<u8>>(),
+                self.len,
+            )
+        };
+        let field1_slice_mut = unsafe {
+            ::core::slice::from_raw_parts_mut(
+                ptr
+                    .add(
+                        self.buf.capacity()
+                            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
+                                .offset_of(1usize),
+                    )
+                    .cast::<::core::mem::MaybeUninit<Option<u8>>>(),
+                self.len,
+            )
+        };
+        let field2_slice_mut = unsafe {
+            ::core::slice::from_raw_parts_mut(
+                ptr
+                    .add(
+                        self.buf.capacity()
+                            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
+                                .offset_of(2usize),
+                    )
+                    .cast::<::core::mem::MaybeUninit<i16>>(),
+                self.len,
+            )
+        };
+        let field3_slice_mut = unsafe {
+            ::core::slice::from_raw_parts_mut(
+                ptr
+                    .add(
+                        self.buf.capacity()
+                            * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
+                                .offset_of(3usize),
+                    )
+                    .cast::<::core::mem::MaybeUninit<u32>>(),
+                self.len,
+            )
+        };
+        for i in 0..self.len() {
+            let field0 = unsafe { field0_slice.get_unchecked(i) }.clone();
+            let field1 = unsafe { field1_slice.get_unchecked(i) }.clone();
+            let field2 = unsafe { field2_slice.get_unchecked(i) }.clone();
+            let field3 = unsafe { field3_slice.get_unchecked(i) }.clone();
+            unsafe { field0_slice_mut.get_unchecked_mut(i).write(field0) };
+            unsafe { field1_slice_mut.get_unchecked_mut(i).write(field1) };
+            unsafe { field2_slice_mut.get_unchecked_mut(i).write(field2) };
+            unsafe { field3_slice_mut.get_unchecked_mut(i).write(field3) };
+            guard.num_init = i;
+        }
+        ::core::mem::forget(guard);
+        unsafe {
+            colvec.set_len(self.len());
+        }
+        colvec
+    }
+}
 impl<A: ::colvec::alloc::Allocator> TestColVec<A> {
     #[inline]
     pub const fn new_in(alloc: A) -> Self {

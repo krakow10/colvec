@@ -214,6 +214,78 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 
 	let field_indices=0..fields_count;
 	let field_types=fields.named.iter().map(|field|field.ty.clone());
+	let field_idents1=fields.named.iter().map(|field|field.ident.as_ref().unwrap().clone());
+	let field_idents2=field_idents1.clone();
+	let field_slice_fn_idents1=fields.named.iter().map(|field|{
+		let ident=field.ident.as_ref().unwrap();
+		let slice_ident=format!("{ident}_slice");
+		syn::Ident::new(&slice_ident,ident.span())
+	});
+	let field_slice_fn_idents2=field_slice_fn_idents1.clone();
+	let field_slice_fn_idents3=field_slice_fn_idents1.clone();
+	let field_slice_mut_fn_idents1=fields.named.iter().map(|field|{
+		let ident=field.ident.as_ref().unwrap();
+		let slice_ident=format!("{ident}_slice_mut");
+		syn::Ident::new(&slice_ident,ident.span())
+	});
+	let field_slice_mut_fn_idents2=field_slice_mut_fn_idents1.clone();
+	let clone = quote! {
+		impl<A: ::colvec::alloc::Allocator + Clone> Clone for #colvec_ident<A>{
+			fn clone(&self)->Self{
+				let alloc = self.allocator().clone();
+				struct DropGuard<'a, A: ::colvec::alloc::Allocator> {
+					colvec: &'a mut #colvec_ident<A>,
+					num_init: usize,
+				}
+				impl<'a, A: ::colvec::alloc::Allocator> Drop for DropGuard<'a, A> {
+					#[inline]
+					fn drop(&mut self) {
+						// SAFETY:
+						// items were marked initialized in the loop below
+						unsafe {
+							self.colvec.set_len(self.num_init);
+						}
+					}
+				}
+				let mut colvec = Self::with_capacity_in(self.len(), alloc);
+				let mut guard = DropGuard { colvec: &mut colvec, num_init: 0 };
+				#(
+					let #field_slice_fn_idents1 = self.#field_slice_fn_idents2();
+				)*
+				// Create the pointer once to satisfy miri
+				let ptr = guard.colvec.as_mut_ptr();
+				#(
+					let #field_slice_mut_fn_idents1 = unsafe {
+						::core::slice::from_raw_parts_mut(
+							ptr.add(self.buf.capacity() * <#ident as ::colvec::raw::StructInfo<#fields_count>>::FIELDS.offset_of(#field_indices))
+								.cast::<::core::mem::MaybeUninit<#field_types>>(),
+							self.len
+						)
+					};
+				)*
+				for i in 0..self.len() {
+					// Clone all fields first. Ensures the cloned values are dropped if clone panics.
+					#(
+						let #field_idents1 = unsafe { #field_slice_fn_idents3.get_unchecked(i) }.clone();
+					)*
+					#(
+						unsafe{ #field_slice_mut_fn_idents2.get_unchecked_mut(i).write(#field_idents2) };
+					)*
+					guard.num_init = i;
+				}
+				::core::mem::forget(guard);
+				// SAFETY:
+				// the colvec was allocated and initialized above to at least this length.
+				unsafe {
+					colvec.set_len(self.len());
+				}
+				colvec
+			}
+		}
+	};
+
+	let field_indices=0..fields_count;
+	let field_types=fields.named.iter().map(|field|field.ty.clone());
 	let field_slice_fn_idents=fields.named.iter().map(|field|{
 		let ident=field.ident.as_ref().unwrap();
 		let slice_ident=format!("{ident}_slice");
@@ -260,6 +332,7 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 		#struct_info
 
 		#drop
+		#clone
 		#impls
 		#field_access
 	};
