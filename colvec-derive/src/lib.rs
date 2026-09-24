@@ -264,6 +264,7 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 					};
 				)*
 				for i in 0..self.len() {
+					guard.num_init = i;
 					// Clone all fields first. Ensures the cloned values are dropped if clone panics.
 					#(
 						let #field_idents1 = unsafe { #field_slice_fn_idents3.get_unchecked(i) }.clone();
@@ -271,7 +272,6 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 					#(
 						unsafe{ #field_slice_mut_fn_idents2.get_unchecked_mut(i).write(#field_idents2) };
 					)*
-					guard.num_init = i;
 				}
 				::core::mem::forget(guard);
 				// SAFETY:

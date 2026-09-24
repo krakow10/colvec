@@ -103,6 +103,7 @@ impl<A: ::colvec::alloc::Allocator + Clone> Clone for TestColVec<A> {
             )
         };
         for i in 0..self.len() {
+            guard.num_init = i;
             let field0 = unsafe { field0_slice.get_unchecked(i) }.clone();
             let field1 = unsafe { field1_slice.get_unchecked(i) }.clone();
             let field2 = unsafe { field2_slice.get_unchecked(i) }.clone();
@@ -111,7 +112,6 @@ impl<A: ::colvec::alloc::Allocator + Clone> Clone for TestColVec<A> {
             unsafe { field1_slice_mut.get_unchecked_mut(i).write(field1) };
             unsafe { field2_slice_mut.get_unchecked_mut(i).write(field2) };
             unsafe { field3_slice_mut.get_unchecked_mut(i).write(field3) };
-            guard.num_init = i;
         }
         ::core::mem::forget(guard);
         unsafe {
