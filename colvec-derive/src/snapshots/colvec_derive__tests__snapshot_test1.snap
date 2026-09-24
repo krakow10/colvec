@@ -53,12 +53,13 @@ impl<A: ::colvec::alloc::Allocator + Clone> Clone for TestColVec<A> {
         let field1_slice = self.field1_slice();
         let field2_slice = self.field2_slice();
         let field3_slice = self.field3_slice();
+        let cap = guard.colvec.buf.capacity();
         let ptr = guard.colvec.as_mut_ptr();
         let field0_slice_mut = unsafe {
             ::core::slice::from_raw_parts_mut(
                 ptr
                     .add(
-                        self.buf.capacity()
+                        cap
                             * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
                                 .offset_of(0usize),
                     )
@@ -70,7 +71,7 @@ impl<A: ::colvec::alloc::Allocator + Clone> Clone for TestColVec<A> {
             ::core::slice::from_raw_parts_mut(
                 ptr
                     .add(
-                        self.buf.capacity()
+                        cap
                             * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
                                 .offset_of(1usize),
                     )
@@ -82,7 +83,7 @@ impl<A: ::colvec::alloc::Allocator + Clone> Clone for TestColVec<A> {
             ::core::slice::from_raw_parts_mut(
                 ptr
                     .add(
-                        self.buf.capacity()
+                        cap
                             * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
                                 .offset_of(2usize),
                     )
@@ -94,7 +95,7 @@ impl<A: ::colvec::alloc::Allocator + Clone> Clone for TestColVec<A> {
             ::core::slice::from_raw_parts_mut(
                 ptr
                     .add(
-                        self.buf.capacity()
+                        cap
                             * <Test as ::colvec::raw::StructInfo<4usize>>::FIELDS
                                 .offset_of(3usize),
                     )

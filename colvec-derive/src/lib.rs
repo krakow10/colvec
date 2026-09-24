@@ -253,11 +253,12 @@ fn derive_struct(ident:syn::Ident,vis:syn::Visibility,fields:syn::FieldsNamed)->
 					let #field_slice_fn_idents1 = self.#field_slice_fn_idents2();
 				)*
 				// Create the pointer once to satisfy miri
+				let cap = guard.colvec.buf.capacity();
 				let ptr = guard.colvec.as_mut_ptr();
 				#(
 					let #field_slice_mut_fn_idents1 = unsafe {
 						::core::slice::from_raw_parts_mut(
-							ptr.add(self.buf.capacity() * <#ident as ::colvec::raw::StructInfo<#fields_count>>::FIELDS.offset_of(#field_indices))
+							ptr.add(cap * <#ident as ::colvec::raw::StructInfo<#fields_count>>::FIELDS.offset_of(#field_indices))
 								.cast::<::core::mem::MaybeUninit<#field_types>>(),
 							self.len
 						)
