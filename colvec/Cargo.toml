@@ -2,6 +2,7 @@
 name = "colvec"
 version.workspace = true
 edition = "2024"
+rust-version.workspace = true
 repository = "https://github.com/krakow10/colvec"
 license = "MIT OR Apache-2.0"
 description = "Struct-of-arrays column vec like Zig's MultiArrayList"

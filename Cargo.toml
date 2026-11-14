@@ -4,5 +4,5 @@ members = [
 	"colvec-derive",
 ]
 resolver = "2"
-package.version = "0.0.4"
+package = { version = "0.0.4", rust-version = "1.100" }
 dependencies.colvec-derive = { version = "0.0.4", path = "colvec-derive", default-features = false }
