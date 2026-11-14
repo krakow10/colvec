@@ -1,11 +1,11 @@
 use core::alloc::Layout;
+use core::alloc::Allocator;
 use core::cmp;
 use core::hint;
 use core::marker::PhantomData;
 use core::num::NonZero;
 use core::ptr::NonNull;
 
-use crate::alloc::Allocator;
 use crate::error::TryReserveError;
 use crate::error::TryReserveErrorKind::*;
 use crate::fields::Fields;

@@ -1,20 +1,10 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[cfg(all(feature = "allocator-api2", feature = "nightly"))]
-compile_error!(
-	"feature \"allocator-api2\" and feature \"nightly\" cannot be enabled at the same time"
-);
-#[cfg(all(not(feature = "allocator-api2"), not(feature = "nightly")))]
-compile_error!("one of feature \"allocator-api2\" and feature \"nightly\" must be enabled");
-
 pub use colvec_derive::ColVec;
 
 mod error;
 
 // used from generated code
-
-#[doc(hidden)]
-pub mod alloc;
 #[doc(hidden)]
 pub mod fields;
 #[doc(hidden)]
